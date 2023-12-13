@@ -10,13 +10,13 @@ st.subheader("Hockey Locks")
 st.title("Free Money Son")
 st.write("Shoutout Cam for always riding")  
 
+# Use a relative path to the Excel file
+excel_file = '2024 Schedule.xlsx'
+
 # Load the Excel file containing game data and wins data
-excel_file = 'C:/Users/adamv/OneDrive/Desktop/Hockey Model/2024 Schedule.xlsx'
-
 df = pd.read_excel(excel_file, sheet_name="Schedule")
-
-# Load data from "Wins Data" sheet
 wins_data = pd.read_excel(excel_file, sheet_name="Test Data")
+
 
 # Get today's date dynamically
 today = datetime.now().date()
