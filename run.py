@@ -10,7 +10,7 @@ st.subheader("Hockey Locks")
 st.title("Free Money Son")
 st.write("Shoutout Cam for always riding")
 st.write("How the model works: Compare these odds to your sportsbook's odds. If my projected odds are lower to the sportsbook's odds place the bet.")  
-st.write("Things to consider: The projected odds dont include rake so will often be higher then your sportsbook showing no value. The projected odds to not consider back to back or injuries which could show false value.")
+st.write("Things to consider: The projected odds dont include rake so will often be higher then your sportsbook showing no value. The projected odds do not consider back to back or injuries which could show false value.")
 
 # Use a relative path to the Excel file
 excel_file = '2024 Schedule.xlsx'
