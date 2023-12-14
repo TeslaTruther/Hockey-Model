@@ -8,7 +8,9 @@ st.set_page_config(page_title="Free Hockey Locks", page_icon=":lock:", layout="w
 # Header section
 st.subheader("Hockey Locks")
 st.title("Free Money Son")
-st.write("Shoutout Cam for always riding")  
+st.write("Shoutout Cam for always riding")
+st.write("How the model works: Compare these odds to your sportsbook's odds. If my projected odds are lower to the sportsbook's odds place the bet.")  
+St.write("Things to consider: The projected odds dont include rake so will often be higher then your sportsbook showing no value. The projected odds to not consider back to back or injuries which could show false value.")
 
 # Use a relative path to the Excel file
 excel_file = '2024 Schedule.xlsx'
@@ -123,8 +125,8 @@ if st.button("Get Today's Odds", key="get_today_odds"):
     st.write("## Odds for Today's Games:")
     for i, game in enumerate(game_odds, start=1):
         st.write(f"### Game {i}:")
-        st.write(f"**Home Team:** {game['Home Team']} | **Win Odds:** {game['Decimal Win Odds']:.3f}")
-        st.write(f"**Visitor Team:** {game['Visitor Team']} | **Lose Odds:** {game['Decimal Lose Odds']:.3f}")
+        st.write(f"**Home Team:** {game['Home Team']} | **Projected Odds:** {game['Decimal Win Odds']:.3f}")
+        st.write(f"**Visitor Team:** {game['Visitor Team']} | **Projected Odds:** {game['Decimal Lose Odds']:.3f}")
         st.write("\n")
 
 # Button to get tomorrow's odds
@@ -159,6 +161,6 @@ if st.button("Get Tomorrow's Odds", key="get_tomorrow_odds"):
     st.write("## Odds for Tomorrow's Games:")
     for i, game in enumerate(game_odds, start=1):
         st.write(f"### Game {i}:")
-        st.write(f"**Home Team:** {game['Home Team']} | **Win Odds:** {game['Decimal Win Odds']:.3f}")
-        st.write(f"**Visitor Team:** {game['Visitor Team']} | **Lose Odds:** {game['Decimal Lose Odds']:.3f}")
+        st.write(f"**Home Team:** {game['Home Team']} | **Projected Odds:** {game['Decimal Win Odds']:.3f}")
+        st.write(f"**Visitor Team:** {game['Visitor Team']} | **Projected Odds:** {game['Decimal Lose Odds']:.3f}")
         st.write("\n")
