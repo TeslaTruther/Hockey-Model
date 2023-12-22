@@ -104,21 +104,18 @@ def implied_probability_to_decimal_odds(probability):
 
 game_odds = []
 
-
-
-
 # Apply custom CSS to the sidebar
 st.markdown(custom_sidebar_css, unsafe_allow_html=True)
 
 # Sidebar with a smaller width
-selection = st.sidebar.radio('Hockey Locks :lock:', ['Home', 'Hockey Model', 'Performance Tracking'])
+selection = st.sidebar.radio('Hockey Locks 🔒', ['Home', 'Hockey Model', 'Performance Tracking'])
 
 if selection == 'Home':
     # Main content
     st.title("Welcome to Hockey Locks :lock:")
-    st.write("This hockey model calculates expected hockey odds by regressing a series of analytics over the last 2 seasons.")
-    st.write("Use this tool to catch your bookie sleeping and make positive EV hockey bets.")           
-
+    st.write("This model calculates expected hockey odds by regressing a series of analytics over the last 2 NHL seasons.")
+    st.write("Use this tool to catch your bookie sleeping and make positive EV hockey bets.")   
+      
 elif selection == 'Hockey Model':
 
     st.header("How the Model Works")
@@ -201,7 +198,7 @@ elif selection == 'Hockey Model':
         
 
 elif selection == 'Performance Tracking':
-    st.write('ACCUMULATING GAINS')
+    st.write('ACCUMULATING GAINS - Coming soon')
 
 
 
