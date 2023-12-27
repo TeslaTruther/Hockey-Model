@@ -20,7 +20,7 @@ custom_sidebar_css = """
 
 # Function to adjust date based on time zone offset
 def adjust_date_by_offset(date_column, time_zone_offset):
-    return date_column + pd.to_timedelta(time_zone_offset, unit='h')
+    return date_column + pd.to_timedelta(time_zone_offset, unit='hours')
 
 # Apply custom CSS to the sidebar
 st.markdown(custom_sidebar_css, unsafe_allow_html=True)
@@ -39,14 +39,17 @@ wins_data = pd.read_excel(excel_file, sheet_name="Test Data")
 df['Date'] = pd.to_datetime(df['Date']).dt.tz_localize(time_zone)
 
 # Get today's date dynamically in Pacific Time
-today = datetime.now(time_zone).date()
+today = datetime.now(time_zone).replace(hour=0, minute=0, second=0, microsecond=0)
 
 # Filter the DataFrame to get today's games
 today_games = df[(df['Date'] >= today) & (df['Date'] < today + pd.DateOffset(1))]
 
 # Get tomorrow's date dynamically in Pacific Time
 tomorrow = today + timedelta(days=1)
-tomorrow_games = df[(df['Date'] >= tomorrow) & (df['Date'] < tomorrow + pd.DateOffset(1))]
+tomorrow_start = tomorrow.replace(hour=0, minute=0, second=0, microsecond=0)
+tomorrow_end = tomorrow_start + pd.DateOffset(1)
+tomorrow_games = df[(df['Date'] >= tomorrow_start) & (df['Date'] < tomorrow_end)]
+
 
 
 
