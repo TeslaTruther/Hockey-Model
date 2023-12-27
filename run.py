@@ -34,8 +34,7 @@ wins_data = pd.read_excel(excel_file, sheet_name="Test Data")
 # Convert 'Date' column to datetime format
 df['Date'] = pd.to_datetime(df['Date'])
 
-# Convert the 'Date' column to the local time zone
-df['Date'] = df['Date'] - pd.to_timedelta(selected_time_zone_offset, unit='8')
+df['Date'] = df['Date'] + pd.to_timedelta(selected_time_zone_offset, unit='h')
 
 # Get today's date dynamically
 today = datetime.now().date()
