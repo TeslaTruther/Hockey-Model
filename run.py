@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from datetime import date, datetime, timedelta
+from datetime import datetime, timedelta
 
 st.set_page_config(page_title="Hockey Locks", page_icon="🔒", layout="wide")
 
@@ -31,17 +31,24 @@ excel_file = '2024 Schedule.xlsx'
 df = pd.read_excel(excel_file, sheet_name="Schedule")
 wins_data = pd.read_excel(excel_file, sheet_name="Test Data")
 
+# Convert 'Date' column to datetime format
+df['Date'] = pd.to_datetime(df['Date'])
+
 # Get today's date dynamically
 today = datetime.now().date()
 
 # Convert 'today' to a Pandas Timestamp object and adjust for the selected time zone offset
 today_timestamp = pd.Timestamp(today) + timedelta(hours=selected_time_zone_offset)
 
+# Convert the 'Date' column to the local time zone (UTC to local)
+df['Date'] = df['Date'] + timedelta(hours=selected_time_zone_offset)
+
 # Filter the DataFrame to get today's games
 today_games = df[(df['Date'] >= today_timestamp) & (df['Date'] < today_timestamp + pd.DateOffset(1))]
 
 tomorrow_timestamp = today_timestamp + pd.DateOffset(1)
 tomorrow_games = df[(df['Date'] >= tomorrow_timestamp) & (df['Date'] < tomorrow_timestamp + pd.DateOffset(1))]
+
 
 def determine_winner(home_team, visitor_team, wins_data, home_goal_advantage=0.18):
     home_srs = pd.to_numeric(wins_data[wins_data['Team'] == home_team]['Average SRS'], errors='coerce')
@@ -153,6 +160,8 @@ elif selection == 'Hockey Model':
 
         # Display the odds for today's games in a Streamlit table
         
+        # Display the odds for today's games in a Streamlit table
+
         for i, game in enumerate(game_odds, start=1):
             st.write(f"### Game {i}:")
             st.write(f"**Home Team:** {game['Home Team']} | **Projected Odds:** {game['Decimal Win Odds']:.3f}")
