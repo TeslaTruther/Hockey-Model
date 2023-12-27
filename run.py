@@ -34,20 +34,21 @@ wins_data = pd.read_excel(excel_file, sheet_name="Test Data")
 # Convert 'Date' column to datetime format
 df['Date'] = pd.to_datetime(df['Date'])
 
+# Convert the 'Date' column to the local time zone (UTC to local)
+df['Date'] = df['Date'] + timedelta(hours=selected_time_zone_offset)
+
 # Get today's date dynamically
 today = datetime.now().date()
 
 # Convert 'today' to a Pandas Timestamp object and adjust for the selected time zone offset
 today_timestamp = pd.Timestamp(today) + timedelta(hours=selected_time_zone_offset)
 
-# Convert the 'Date' column to the local time zone (UTC to local)
-df['Date'] = df['Date'] + timedelta(hours=selected_time_zone_offset)
-
 # Filter the DataFrame to get today's games
 today_games = df[(df['Date'] >= today_timestamp) & (df['Date'] < today_timestamp + pd.DateOffset(1))]
 
 tomorrow_timestamp = today_timestamp + pd.DateOffset(1)
 tomorrow_games = df[(df['Date'] >= tomorrow_timestamp) & (df['Date'] < tomorrow_timestamp + pd.DateOffset(1))]
+
 
 
 def determine_winner(home_team, visitor_team, wins_data, home_goal_advantage=0.18):
