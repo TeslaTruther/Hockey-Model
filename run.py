@@ -40,7 +40,7 @@ wins_data = pd.read_excel(excel_file, sheet_name="Test Data")
 df['Date'] = pd.to_datetime(df['Date'])
 
 # Create a time zone object for the desired offset (UTC-8)
-time_zone = pytz.timezone('Etc/GMT-8')  # Use 'Etc/GMT+8' to represent UTC-8
+time_zone = pytz.timezone('Etc/GMT+8')  # Use 'Etc/GMT+8' to represent UTC-8
 
 # Adjust the 'Date' column to the specified time zone
 df['Date'] = df['Date'].dt.tz_localize(pytz.utc).dt.tz_convert(time_zone)
