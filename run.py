@@ -9,12 +9,11 @@ st.set_page_config(page_title="Hockey Locks", page_icon="🔒", layout="wide")
 custom_sidebar_css = """
     <style>
         .sidebar .sidebar-content {
-            width: 200px;  /* Adjust the width as needed */
-            background-color: #333;  /* Sidebar background color */
+            width: 200px;
+            background-color: #333;
         }
-
         .sidebar .sidebar-content .stRadio {
-            color: white;  /* Radio button text color */
+            color: white;
         }
     </style>
 """
@@ -26,8 +25,8 @@ def adjust_date_by_offset(date_column, time_zone_offset):
 # Apply custom CSS to the sidebar
 st.markdown(custom_sidebar_css, unsafe_allow_html=True)
 
-# Set the time zone offset to 8 hours back (UTC-8)
-selected_time_zone_offset = -8
+# Set the time zone to Pacific Time (UTC-8)
+time_zone = pytz.timezone('America/Los_Angeles')
 
 # Use a relative path to the Excel file
 excel_file = '2024 Schedule.xlsx'
@@ -36,26 +35,18 @@ excel_file = '2024 Schedule.xlsx'
 df = pd.read_excel(excel_file, sheet_name="Schedule")
 wins_data = pd.read_excel(excel_file, sheet_name="Test Data")
 
-# Convert 'Date' column to datetime format
-df['Date'] = pd.to_datetime(df['Date'])
+# Convert 'Date' column to datetime format and adjust for Pacific Time
+df['Date'] = pd.to_datetime(df['Date']).dt.tz_localize(time_zone)
 
-# Create a time zone object for the desired offset (UTC-8)
-time_zone = pytz.timezone('Etc/GMT+8')  # Use 'Etc/GMT+8' to represent UTC-8
-
-# Adjust the 'Date' column to the specified time zone
-df['Date'] = df['Date'].dt.tz_localize(pytz.utc).dt.tz_convert(time_zone)
-
-# Get today's date dynamically
-today = datetime.now().date()
-
-# Convert 'today' to a Pandas Timestamp object and adjust for the selected time zone offset
-today_timestamp = pd.Timestamp(today, tz=time_zone)
+# Get today's date dynamically in Pacific Time
+today = datetime.now(time_zone).date()
 
 # Filter the DataFrame to get today's games
-today_games = df[(df['Date'] >= today_timestamp) & (df['Date'] < today_timestamp + pd.DateOffset(1))]
+today_games = df[(df['Date'] >= today) & (df['Date'] < today + pd.DateOffset(1))]
 
-tomorrow_timestamp = today_timestamp + pd.DateOffset(1)
-tomorrow_games = df[(df['Date'] >= tomorrow_timestamp) & (df['Date'] < tomorrow_timestamp + pd.DateOffset(1))]
+# Get tomorrow's date dynamically in Pacific Time
+tomorrow = today + timedelta(days=1)
+tomorrow_games = df[(df['Date'] >= tomorrow) & (df['Date'] < tomorrow + pd.DateOffset(1))]
 
 
 
