@@ -165,11 +165,17 @@ elif selection == 'Hockey Model':
         
         # Display the odds for today's games in a Streamlit table
 
-        for i, game in enumerate(game_odds, start=1):
-            st.write(f"### Game {i}:")
-            st.write(f"**Home Team:** {game['Home Team']} | **Projected Odds:** {game['Decimal Win Odds']:.3f}")
-            st.write(f"**Visitor Team:** {game['Visitor Team']} | **Projected Odds:** {game['Decimal Lose Odds']:.3f}")
-            st.write("\n")
+# Display the odds for today's games in a Streamlit table
+        if today_games.empty:
+            st.write("No games today.")
+        else:
+            # Display the odds for today's games in a Streamlit table
+            for i, game in enumerate(game_odds, start=1):
+                st.write(f"### Game {i}:")
+                st.write(f"**Home Team:** {game['Home Team']} | **Projected Odds:** {game['Decimal Win Odds']:.3f}")
+                st.write(f"**Visitor Team:** {game['Visitor Team']} | **Projected Odds:** {game['Decimal Lose Odds']:.3f}")
+                st.write("\n")
+
 
     # Button to get tomorrow's odds
     if st.button("Generate Tomorrow's Odds", key="get_tomorrow_odds"):
@@ -201,11 +207,15 @@ elif selection == 'Hockey Model':
 
         # Display the odds for tomorrow's games in a Streamlit table
         
-        for i, game in enumerate(game_odds, start=1):
-            st.write(f"### Game {i}:")
-            st.write(f"**Home Team:** {game['Home Team']} | **Projected Odds:** {game['Decimal Win Odds']:.3f}")
-            st.write(f"**Visitor Team:** {game['Visitor Team']} | **Projected Odds:** {game['Decimal Lose Odds']:.3f}")
-            st.write("\n")
+        if tomorrow_games.empty:
+            st.write("No games tomorrow.")
+        else:
+            # Display the odds for today's games in a Streamlit table
+            for i, game in enumerate(game_odds, start=1):
+                st.write(f"### Game {i}:")
+                st.write(f"**Home Team:** {game['Home Team']} | **Projected Odds:** {game['Decimal Win Odds']:.3f}")
+                st.write(f"**Visitor Team:** {game['Visitor Team']} | **Projected Odds:** {game['Decimal Lose Odds']:.3f}")
+                st.write("\n")
 
         
 
