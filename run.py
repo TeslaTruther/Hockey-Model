@@ -18,32 +18,12 @@ custom_sidebar_css = """
     </style>
 """
 
-import streamlit as st
-import pandas as pd
-from datetime import datetime, timedelta
-
-st.set_page_config(page_title="Hockey Locks", page_icon="🔒", layout="wide")
-
-# Custom CSS for styling the sidebar
-custom_sidebar_css = """
-    <style>
-        .sidebar .sidebar-content {
-            width: 200px;  /* Adjust the width as needed */
-            background-color: #333;  /* Sidebar background color */
-        }
-
-        .sidebar .sidebar-content .stRadio {
-            color: white;  /* Radio button text color */
-        }
-    </style>
-"""
-
-# Apply custom CSS to the sidebar
-st.markdown(custom_sidebar_css, unsafe_allow_html=True)
-
 # Function to adjust date based on time zone offset
 def adjust_date_by_offset(date_column, time_zone_offset):
     return date_column + pd.to_timedelta(time_zone_offset, unit='h')
+
+# Apply custom CSS to the sidebar
+st.markdown(custom_sidebar_css, unsafe_allow_html=True)
 
 # Set the time zone offset to 8 hours back (UTC-8)
 selected_time_zone_offset = -8
@@ -70,6 +50,7 @@ today_games = df[(df['Date'] >= today_timestamp) & (df['Date'] < today_timestamp
 
 tomorrow_timestamp = today_timestamp + pd.DateOffset(1)
 tomorrow_games = df[(df['Date'] >= tomorrow_timestamp) & (df['Date'] < tomorrow_timestamp + pd.DateOffset(1))]
+
 
 
 
