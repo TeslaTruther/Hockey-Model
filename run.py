@@ -7,28 +7,21 @@ import os
 
 st.set_page_config(page_title="Hockey Locks", page_icon="🔒", layout="wide")
 
-# Get the current working directory
-cwd = os.getcwd()
+# Construct relative paths for each image
+relative_path_1 = 'Panda1.png'
+relative_path_2 = 'Panda2.png'
+relative_path_3 = 'Panda3.png'
 
-# Define relative paths to your images
-image_path_1 = 'panda1.png'
-image_path_2 = 'panda2.png'
-image_path_3 = 'panda3.png'
+# Open the images
+panda1 = Image.open(relative_path_1)
+panda2 = Image.open(relative_path_2)
+panda3 = Image.open(relative_path_3)
 
-# Create absolute paths by joining with the current working directory
-absolute_path_1 = os.path.join(cwd, image_path_1)
-absolute_path_2 = os.path.join(cwd, image_path_2)
-absolute_path_3 = os.path.join(cwd, image_path_3)
-
-# Open images using absolute paths
-panda1 = Image.open(absolute_path_1)
-panda2 = Image.open(absolute_path_2)
-panda3 = Image.open(absolute_path_3)
-
-# Resize images
+# Resize the images
 smallerpanda1 = panda1.resize((400, 400))
 smallerpanda2 = panda2.resize((200, 200))
 smallerpanda3 = panda3.resize((350, 350))
+
 
 
 # Custom CSS for styling the sidebar
