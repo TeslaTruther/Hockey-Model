@@ -2,8 +2,18 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime, timedelta
 import pytz  
+from PIL import Image   
 
 st.set_page_config(page_title="Hockey Locks", page_icon="🔒", layout="wide")
+
+panda1 = Image.open('panda1.png')
+panda2 = Image.open('panda2.png')
+panda3 = Image.open('panda3.png')
+smallerpanda1 = panda1.resize((400, 400))
+smallerpanda3 = panda3.resize((350, 350))
+smallerpanda2 = panda2.resize((200, 200))
+
+
 
 # Custom CSS for styling the sidebar
 custom_sidebar_css = """
@@ -33,7 +43,7 @@ excel_file = '2024 Schedule.xlsx'
 
 # Load the Excel file containing game data and wins data
 df = pd.read_excel(excel_file, sheet_name="Schedule")
-wins_data = pd.read_excel(excel_file, sheet_name="Test Data")
+wins_data = pd.read_excel(excel_file, sheet_name="MoneyLine")
 
 # Convert 'Date' column to datetime format and adjust for Pacific Time
 df['Date'] = pd.to_datetime(df['Date']).dt.tz_localize(time_zone)
@@ -54,27 +64,25 @@ tomorrow_games = df[(df['Date'] >= tomorrow_start) & (df['Date'] < tomorrow_end)
 
 
 def determine_winner(home_team, visitor_team, wins_data, home_goal_advantage=0.18):
-    home_srs = pd.to_numeric(wins_data[wins_data['Team'] == home_team]['Average SRS'], errors='coerce')
     home_test4 = pd.to_numeric(wins_data[wins_data['Team'] == home_team]['Test 4'], errors='coerce')
     home_test6 = pd.to_numeric(wins_data[wins_data['Team'] == home_team]['Test 6'], errors='coerce')
-
-    visitor_srs = pd.to_numeric(wins_data[wins_data['Team'] == visitor_team]['Average SRS'], errors='coerce')
+   
     visitor_test4 = pd.to_numeric(wins_data[wins_data['Team'] == visitor_team]['Test 4'], errors='coerce')
     visitor_test6 = pd.to_numeric(wins_data[wins_data['Team'] == visitor_team]['Test 6'], errors='coerce')
 
     # Check if both stats are valid
-    if (home_srs.notna().all() and home_test4.notna().all() and home_test6.notna().all() and
-            visitor_srs.notna().all() and visitor_test4.notna().all() and visitor_test6.notna().all()):
-        home_srs = home_srs.item()
+    if ( home_test4.notna().all() and home_test6.notna().all() and
+            visitor_test4.notna().all() and visitor_test6.notna().all()):
+        
         home_test4 = home_test4.item()
         home_test6 = home_test6.item()
 
-        visitor_srs = visitor_srs.item()
+        
         visitor_test4 = visitor_test4.item()
         visitor_test6 = visitor_test6.item()
 
         # Adjust the goal difference to give the home team a 0.15 goal advantage
-        expected_goal_diff = 0 * (home_srs - visitor_srs) + 0.55 * (home_test4 - visitor_test4) + 0.45 * (
+        expected_goal_diff = 0.55 * (home_test4 - visitor_test4) + 0.45 * (
                 home_test6 - visitor_test6) + home_goal_advantage
 
         if expected_goal_diff > 0:
@@ -118,21 +126,22 @@ game_odds = []
 st.markdown(custom_sidebar_css, unsafe_allow_html=True)
 
 # Sidebar with a smaller width
-selection = st.sidebar.radio('Hockey Locks 🔒', ['Home', 'Hockey Model', 'Performance Tracking'])
+selection = st.sidebar.radio('Hockey Locks 🔒', ['Home', 'NHL Model', 'Performance Tracking'])
 
 if selection == 'Home':
     # Main content
     st.title("Welcome to Hockey Locks :lock:")
     st.write("This model calculates expected hockey odds by regressing a series of analytics over the last 2 NHL seasons.")
-    st.write("Use this tool to catch your bookie sleeping and make positive EV hockey bets.")   
-      
-elif selection == 'Hockey Model':
+    st.write("Use this tool to find inefficient odds and make positive EV bets.")   
+     
+    st.image(smallerpanda3)      
+elif selection == 'NHL Model':
 
     st.header("How the Model Works")
     st.write("Compare these odds to your sportsbook's odds. If my projected odds are lower than the sportsbook's odds, place the bet.")
     st.subheader("Model Considerations")
     st.write("The model does not include rake by design.")
-    st.write("The model does not incorporate back-to-back games or injuries. These statistically significant varibles need to be adjusted manually.")
+    st.write("The model does not incorporate back-to-back games or injuries. These varibles need to be adjusted manually.")
     st.subheader("Run The Model:")
     # Button to get today's odds
     if st.button("Generate Today's Odds", key="get_today_odds"):
@@ -168,6 +177,7 @@ elif selection == 'Hockey Model':
 # Display the odds for today's games in a Streamlit table
         if today_games.empty:
             st.write("No games today.")
+            st.image(smallerpanda2)
         else:
             # Display the odds for today's games in a Streamlit table
             for i, game in enumerate(game_odds, start=1):
@@ -209,6 +219,7 @@ elif selection == 'Hockey Model':
         
         if tomorrow_games.empty:
             st.write("No games tomorrow.")
+            st.image(smallerpanda2)
         else:
             # Display the odds for today's games in a Streamlit table
             for i, game in enumerate(game_odds, start=1):
@@ -220,7 +231,9 @@ elif selection == 'Hockey Model':
         
 
 elif selection == 'Performance Tracking':
-    st.write('ACCUMULATING GAINS - Coming soon')
+    st.subheader('ACCUMULATING GAINS - Coming soon')
+    
+    st.image(smallerpanda1)  
 
 
 
