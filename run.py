@@ -7,20 +7,34 @@ import os
 
 st.set_page_config(page_title="Hockey Locks", page_icon="🔒", layout="wide")
 
+
+class LazyImage:
+    def __init__(self, path):
+        self.path = path
+        self.image = None
+
+    def load(self):
+        if self.image is None:
+            self.image = Image.open(self.path)
+
+    def resize(self, size):
+        self.load()
+        return self.image.resize(size)
+
 # Construct relative paths for each image
 relative_path_1 = 'Panda1.png'
 relative_path_2 = 'Panda2.png'
 relative_path_3 = 'Panda3.png'
 
-# Open the images
-panda1 = Image.open(relative_path_1)
-panda2 = Image.open(relative_path_2)
-panda3 = Image.open(relative_path_3)
+# Create LazyImage instances
+lazy_panda1 = LazyImage(relative_path_1)
+lazy_panda2 = LazyImage(relative_path_2)
+lazy_panda3 = LazyImage(relative_path_3)
 
-# Resize the images
-smallerpanda1 = panda1.resize((400, 400))
-smallerpanda2 = panda2.resize((200, 200))
-smallerpanda3 = panda3.resize((350, 350))
+# Resize the images only when needed
+smallerpanda1 = lazy_panda1.resize((400, 400))
+smallerpanda2 = lazy_panda2.resize((200, 200))
+smallerpanda3 = lazy_panda3.resize((350, 350))
 
 
 
