@@ -3,16 +3,32 @@ import pandas as pd
 from datetime import datetime, timedelta
 import pytz  
 from PIL import Image   
+import os
 
 st.set_page_config(page_title="Hockey Locks", page_icon="🔒", layout="wide")
 
-panda1 = Image.open('panda1.png')
-panda2 = Image.open('panda2.png')
-panda3 = Image.open('panda3.png')
-smallerpanda1 = panda1.resize((400, 400))
-smallerpanda3 = panda3.resize((350, 350))
-smallerpanda2 = panda2.resize((200, 200))
+# Get the current working directory
+cwd = os.getcwd()
 
+# Define relative paths to your images
+image_path_1 = 'panda1.png'
+image_path_2 = 'panda2.png'
+image_path_3 = 'panda3.png'
+
+# Create absolute paths by joining with the current working directory
+absolute_path_1 = os.path.join(cwd, image_path_1)
+absolute_path_2 = os.path.join(cwd, image_path_2)
+absolute_path_3 = os.path.join(cwd, image_path_3)
+
+# Open images using absolute paths
+panda1 = Image.open(absolute_path_1)
+panda2 = Image.open(absolute_path_2)
+panda3 = Image.open(absolute_path_3)
+
+# Resize images
+smallerpanda1 = panda1.resize((400, 400))
+smallerpanda2 = panda2.resize((200, 200))
+smallerpanda3 = panda3.resize((350, 350))
 
 
 # Custom CSS for styling the sidebar
