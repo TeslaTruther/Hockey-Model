@@ -69,20 +69,17 @@ selection = st.sidebar.radio('Hockey Locks 🔒', ['Home', 'NHL Model', 'Perform
 if selection == 'Home':
     # Main content
     st.title("Welcome to Hockey Locks :lock:")
-    st.write("This model calculates expected hockey odds by regressing a series of analytics over the last 2 NHL seasons.")
+    st.write("This app calculates expected hockey odds by regressing a series of analytics over the last 2 NHL seasons.")
     st.write("Use this tool to find inefficient odds and make positive EV bets.")   
      
-    st.image(resized_pandas[2])      
+    st.image(resized_pandas[0])      
 elif selection == 'NHL Model':
     st.header("How the Model Works")
     st.write("Compare these odds to your sportsbook's odds. If my projected odds are lower than the sportsbook's odds, place the bet.")
     st.subheader("Model Considerations")
-    st.write("The model does not include rake.")
     st.write("The model does not incorporate back-to-back games.")
     st.subheader("Run The Model:")
     
-
-# Button to get today's odds
 # Button to get today's odds
     if st.button("Generate Today's Odds", key="get_today_odds"):
         # Calculate and display the over/under odds, implied probabilities, and projected scores
@@ -218,4 +215,4 @@ elif selection == 'NHL Model':
 
 elif selection == 'Performance Tracking':
     st.subheader('ACCUMULATING GAINS - Coming soon')
-    st.image(resized_pandas[0])
+    st.image(resized_pandas[1])
