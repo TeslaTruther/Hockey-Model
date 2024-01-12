@@ -4,3 +4,5 @@ scipy==1.7.3
 pytz==2023.3.post1
 plotly==5.3.1
 openpyxl
+protobuf==3.20.1
+click==7.1.2
