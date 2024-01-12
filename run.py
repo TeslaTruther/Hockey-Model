@@ -84,10 +84,21 @@ elif selection == 'NHL Model':
     # Define a list of available methods for calculating odds
     calculation_methods = ['Decimal', 'American']
 
-# Add a selectbox to choose the calculation method
+    # Add a selectbox to choose the calculation method
     selected_method = st.selectbox('Select Odds:', calculation_methods)
 
-    
+    # Apply custom CSS to make the select box smaller
+    st.markdown(
+        """
+        <style>
+        div[data-baseweb="select"] {
+            max-width: 150px; /* Adjust the width as needed */
+        }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+  
 # Button to get today's odds
     if st.button("Generate Today's Odds", key="get_today_odds"):
         # Calculate and display the over/under odds, implied probabilities, and projected scores based on the selected method
@@ -150,7 +161,7 @@ elif selection == 'NHL Model':
                 st.write(f"**Over Under Odds:** Over: {game.Totals_Probability['Over']:.2f}, Under: {game.Totals_Probability['Under']:.2f}")
 
         elif selected_method == 'American':
-            st.subheader('Coming Soon')
+            st.subheader('Coming Soon - Decimal Only')
 
 
           
@@ -218,7 +229,7 @@ elif selection == 'NHL Model':
                 st.write(
                     f"**Over Under Odds:** Over: {game.Totals_Probability['Over']:.2f}, Under: {game.Totals_Probability['Under']:.2f}")
         elif selected_method == 'American':
-            st.subheader('Coming soon')
+            st.subheader('Coming soon - Decimal only')
 
                     
                                  
