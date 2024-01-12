@@ -6,6 +6,7 @@ import numpy as np
 from PIL import Image
 import os
 import scipy.stats as stats
+import plotly.express as px
 
 st.set_page_config(page_title="Hockey Locks", page_icon="🔒", layout="wide")
 
@@ -69,7 +70,7 @@ selection = st.sidebar.radio('Hockey Locks 🔒', ['Home', 'NHL Model', 'Perform
 if selection == 'Home':
     # Main content
     st.title("Welcome to Hockey Locks :lock:")
-    st.write("This app calculates expected hockey odds by regressing a series of analytics over the last 2 NHL seasons.")
+    st.write("This app uses linear regression to generate odds using a combination of real time player and team data.")
     st.write("Use this tool to find inefficient odds and make positive EV bets.")   
      
     st.image(resized_pandas[0])      
@@ -79,140 +80,212 @@ elif selection == 'NHL Model':
     st.subheader("Model Considerations")
     st.write("The model does not incorporate back-to-back games.")
     st.subheader("Run The Model:")
+
+    # Define a list of available methods for calculating odds
+    calculation_methods = ['Decimal', 'American']
+
+# Add a selectbox to choose the calculation method
+    selected_method = st.selectbox('Select Odds:', calculation_methods)
+
     
 # Button to get today's odds
     if st.button("Generate Today's Odds", key="get_today_odds"):
-        # Calculate and display the over/under odds, implied probabilities, and projected scores
-        today_games['Projected_Score'] = today_games['hometotal'] + today_games['vistotal']
+        # Calculate and display the over/under odds, implied probabilities, and projected scores based on the selected method
+        if selected_method == 'Decimal':
+            # Calculate and display the over/under odds, implied probabilities, and projected scores
+            today_games['Projected_Score'] = today_games['hometotal'] + today_games['vistotal']
 
-        # Calculate the projected Money Line odds
-        today_games['Projected_Line'] = 0.55 * today_games['ml1'] + 0.45 * today_games['ml2']
+            # Calculate the projected Money Line odds
+            today_games['Projected_Line'] = 0.55 * today_games['ml1'] + 0.45 * today_games['ml2']
 
-        # Round the constant to the nearest 0.5 using round_half_even
-        today_games['Constant'] = np.round(today_games['Projected_Score'] / 0.5) * 0.5
+            # Round the constant to the nearest 0.5 using round_half_even
+            today_games['Constant'] = np.round(today_games['Projected_Score'] / 0.5) * 0.5
 
-        # Set the standard deviation
-        std_deviation_overunder = 2.0
-        std_deviation_ml = 2.5
+            # Set the standard deviation
+            std_deviation_overunder = 2.0
+            std_deviation_ml = 2.5
 
-        # Calculate implied prob for ML
-        today_games['ML_Home_Prob'] = today_games.apply(
-            lambda row: stats.norm.cdf((row.Projected_Line) / std_deviation_ml),
-            axis=1
-        )
+            # Calculate implied prob for ML
+            today_games['ML_Home_Prob'] = today_games.apply(
+                lambda row: stats.norm.cdf((row.Projected_Line) / std_deviation_ml),
+                axis=1
+            )
 
-        today_games['ML_Away_Prob'] = today_games.apply(
-            lambda row: stats.norm.cdf(- (row.Projected_Line) / std_deviation_ml),
-            axis=1
-        )
+            today_games['ML_Away_Prob'] = today_games.apply(
+                lambda row: stats.norm.cdf(- (row.Projected_Line) / std_deviation_ml),
+                axis=1
+            )
 
-        # Convert implied probabilities to decimal odds for ML
-        today_games['ML_Home_Decimal_Odds'] = 1 / today_games['ML_Home_Prob']
-        today_games['ML_Away_Decimal_Odds'] = 1 / today_games['ML_Away_Prob']
+            # Convert implied probabilities to decimal odds for ML
+            today_games['ML_Home_Decimal_Odds'] = 1 / today_games['ML_Home_Prob']
+            today_games['ML_Away_Decimal_Odds'] = 1 / today_games['ML_Away_Prob']
+
+            # Calculate the odds for over/under using the normal distribution
+            today_games['Over_Under_Odds'] = today_games.apply(
+                lambda row: {
+                    'Over': 1 - stats.norm.cdf((row.Constant - row.Projected_Score) / std_deviation_overunder),
+                    'Under': stats.norm.cdf((row.Constant - row.Projected_Score) / std_deviation_overunder)
+                },
+                axis=1
+            )
+
+            # Calculate the implied probability percentages for Over/Under
+            today_games['Totals_Probability'] = today_games['Over_Under_Odds'].apply(
+                lambda odds: {'Over': 1 / odds['Over'], 'Under': 1 / odds['Under']}
+            )
+
+            # Calculate decimal odds for Over/Under
+            today_games['Totals_Decimal_Odds'] = today_games['Totals_Probability'].apply(
+                lambda odds: {'Over': odds['Over'] - 1, 'Under': odds['Under'] - 1}
+            )
+
+            # Display the odds for today's games in a Streamlit table
+            st.write("### Today's Games and Projected Odds:")
+            for i, game in enumerate(today_games.itertuples(), start=1):                   
+                st.subheader(f"{game.Visitor} *@* {game.Home}")
+                st.write(f"{game.Home} | **Projected Odds:** {game.ML_Home_Decimal_Odds:.3f}")
+                st.write(f"{game.Visitor} | **Projected Odds:** {game.ML_Away_Decimal_Odds:.3f}")
+
+                st.write(f"Projected Over Under Line: {game.Constant:.1f}")            
+                st.write(f"**Over Under Odds:** Over: {game.Totals_Probability['Over']:.2f}, Under: {game.Totals_Probability['Under']:.2f}")
+
+        elif selected_method == 'American':
+            st.subheader('Coming Soon')
 
 
-        # Calculate the odds for over/under using the normal distribution
-        today_games['Over_Under_Odds'] = today_games.apply(
-            lambda row: {
-                'Over': 1 - stats.norm.cdf((row.Constant - row.Projected_Score) / std_deviation_overunder),
-                'Under': stats.norm.cdf((row.Constant - row.Projected_Score) / std_deviation_overunder)
-            },
-            axis=1
-        )
+          
 
-        # Calculate the implied probability percentages for Over/Under
-        today_games['Totals_Probability'] = today_games['Over_Under_Odds'].apply(
-            lambda odds: {'Over': 1 / odds['Over'], 'Under': 1 / odds['Under']}
-        )
-
-        # Calculate decimal odds for Over/Under
-        today_games['Totals_Decimal_Odds'] = today_games['Totals_Probability'].apply(
-            lambda odds: {'Over': odds['Over'] - 1, 'Under': odds['Under'] - 1}
-        )
-
-             # Display the odds for today's games in a Streamlit table
-        # Display the odds for today's games in a Streamlit table
-        st.write("### Today's Games and Projected Odds:")
-        for i, game in enumerate(today_games.itertuples(), start=1):                   
-            st.subheader(f"{game.Visitor} *@* {game.Home}")
-            st.write(f"{game.Home} | **Projected Odds:** {game.ML_Home_Decimal_Odds:.3f}")
-            st.write(f"{game.Visitor} | **Projected Odds:** {game.ML_Away_Decimal_Odds:.3f}")
-            
-            st.write(f"Projected Over Under Line: {game.Constant:.1f}")            
-            st.write(f"**Over Under Odds:** Over: {game.Totals_Probability['Over']:.2f}, Under: {game.Totals_Probability['Under']:.2f}")
-
-            
+                
     if st.button("Generate Tomorrow's Odds", key="get_tomorrows_odds"):
-         
-         # Calculate and display the over/under odds, implied probabilities, and projected scores
-        tomorrow_games['Projected_Score'] = tomorrow_games['hometotal'] + tomorrow_games['vistotal']
+        # Calculate and display the over/under odds, implied probabilities, and projected scores based on the selected method
+        if selected_method == 'Decimal':
+            # Calculate and display the over/under odds, implied probabilities, and projected scores
+            tomorrow_games['Projected_Score'] = tomorrow_games['hometotal'] + tomorrow_games['vistotal']
 
-        # Calculate the projected Money Line odds
-        tomorrow_games['Projected_Line'] = 0.55 * tomorrow_games['ml1'] + 0.45 * tomorrow_games['ml2']
+            # Calculate the projected Money Line odds
+            tomorrow_games['Projected_Line'] = 0.55 * tomorrow_games['ml1'] + 0.45 * tomorrow_games['ml2']
 
-        # Round the constant to the nearest 0.5 using round_half_even
-        tomorrow_games['Constant'] = np.round(tomorrow_games['Projected_Score'] / 0.5) * 0.5
+            # Round the constant to the nearest 0.5 using round_half_even
+            tomorrow_games['Constant'] = np.round(tomorrow_games['Projected_Score'] / 0.5) * 0.5
 
-        # Set the standard deviation
-        std_deviation_overunder = 2.0
-        std_deviation_ml = 2.5
+            # Set the standard deviation
+            std_deviation_overunder = 2.0
+            std_deviation_ml = 2.5
 
-        # Calculate implied prob for ML
-        tomorrow_games['ML_Home_Prob'] = tomorrow_games.apply(
-            lambda row: stats.norm.cdf((row.Projected_Line) / std_deviation_ml),
-            axis=1
-        )
+            # Calculate implied prob for ML
+            tomorrow_games['ML_Home_Prob'] = tomorrow_games.apply(
+                lambda row: stats.norm.cdf((row.Projected_Line) / std_deviation_ml),
+                axis=1
+            )
 
-        tomorrow_games['ML_Away_Prob'] = tomorrow_games.apply(
-            lambda row: stats.norm.cdf(- (row.Projected_Line) / std_deviation_ml),
-            axis=1
-        )
+            tomorrow_games['ML_Away_Prob'] = tomorrow_games.apply(
+                lambda row: stats.norm.cdf(- (row.Projected_Line) / std_deviation_ml),
+                axis=1
+            )
 
-        # Convert implied probabilities to decimal odds for ML
-        tomorrow_games['ML_Home_Decimal_Odds'] = 1 / tomorrow_games['ML_Home_Prob']
-        tomorrow_games['ML_Away_Decimal_Odds'] = 1 / tomorrow_games['ML_Away_Prob']
+            # Convert implied probabilities to decimal odds for ML
+            tomorrow_games['ML_Home_Decimal_Odds'] = 1 / tomorrow_games['ML_Home_Prob']
+            tomorrow_games['ML_Away_Decimal_Odds'] = 1 / tomorrow_games['ML_Away_Prob']
 
+            # Calculate the odds for over/under using the normal distribution
+            tomorrow_games['Over_Under_Odds'] = tomorrow_games.apply(
+                lambda row: {
+                    'Over': 1 - stats.norm.cdf((row.Constant - row.Projected_Score) / std_deviation_overunder),
+                    'Under': stats.norm.cdf((row.Constant - row.Projected_Score) / std_deviation_overunder)
+                },
+                axis=1
+            )
 
+            # Calculate the implied probability percentages for Over/Under
+            tomorrow_games['Totals_Probability'] = tomorrow_games['Over_Under_Odds'].apply(
+                lambda odds: {'Over': 1 / odds['Over'], 'Under': 1 / odds['Under']}
+            )
 
+            # Calculate decimal odds for Over/Under
+            tomorrow_games['Totals_Decimal_Odds'] = tomorrow_games['Totals_Probability'].apply(
+                lambda odds: {'Over': odds['Over'] - 1, 'Under': odds['Under'] - 1}
+            )
 
-        # Calculate the odds for over/under using the normal distribution
-        tomorrow_games['Over_Under_Odds'] = tomorrow_games.apply(
-            lambda row: {
-                'Over': 1 - stats.norm.cdf((row.Constant - row.Projected_Score) / std_deviation_overunder),
-                'Under': stats.norm.cdf((row.Constant - row.Projected_Score) / std_deviation_overunder)
-            },
-            axis=1
-        )
+            # Display the odds for tomorrow's games in a Streamlit table
+            st.write("### Tomorrow's Games and Projected Odds:")
 
-        # Calculate the implied probability percentages for Over/Under
-        tomorrow_games['Totals_Probability'] = tomorrow_games['Over_Under_Odds'].apply(
-            lambda odds: {'Over': 1 / odds['Over'], 'Under': 1 / odds['Under']}
-        )
+            for i, game in enumerate(tomorrow_games.itertuples(), start=1):
+                st.subheader(f"{game.Visitor} *@* {game.Home}")
+                st.write(f"{game.Home} | **Projected Odds:** {game.ML_Home_Decimal_Odds:.3f}")
+                st.write(f"{game.Visitor} | **Projected Odds:** {game.ML_Away_Decimal_Odds:.3f}")
 
-        # Calculate decimal odds for Over/Under
-        tomorrow_games['Totals_Decimal_Odds'] = tomorrow_games['Totals_Probability'].apply(
-            lambda odds: {'Over': odds['Over'] - 1, 'Under': odds['Under'] - 1}
-        )
+                st.write(f"Projected Over Under Line: {game.Constant:.1f}")
+                st.write(
+                    f"**Over Under Odds:** Over: {game.Totals_Probability['Over']:.2f}, Under: {game.Totals_Probability['Under']:.2f}")
+        elif selected_method == 'American':
+            st.subheader('Coming soon')
 
-             # Display the odds for today's games in a Streamlit table
-        # Display the odds for today's games in a Streamlit table
-        st.write("### Tomorrow's Games and Projected Odds:")
-           
-        for i, game in enumerate(tomorrow_games.itertuples(), start=1):                   
-            st.subheader(f"{game.Visitor} *@* {game.Home}")
-            st.write(f"{game.Home} | **Projected Odds:** {game.ML_Home_Decimal_Odds:.3f}")
-            st.write(f"{game.Visitor} | **Projected Odds:** {game.ML_Away_Decimal_Odds:.3f}")
-            
-            st.write(f"Projected Over Under Line: {game.Constant:.1f}")            
-            st.write(f"**Over Under Odds:** Over: {game.Totals_Probability['Over']:.2f}, Under: {game.Totals_Probability['Under']:.2f}")
-            
-         
-            
-            
+                    
+                                 
 
-
-# Display the odds for today's games in a Streamlit table
 
 elif selection == 'Performance Tracking':
-    st.subheader('ACCUMULATING GAINS - Coming soon')
-    st.image(resized_pandas[1])
+    # Define functions
+    def get_current_value(file_path, column_name):
+        df = pd.read_excel(file_path)
+        last_value = df[column_name].iloc[-1]
+        return last_value
+
+    def calculate_win_loss_push(column):
+        wins = int(column.str.count('y').sum())
+        losses = int(column.str.count('n').sum())
+        pushes = int(column.str.count('p').sum())
+        return f'{wins} Wins - {losses} Losses - {pushes} Push'
+
+    def calculate_percentage_return(starting_bank_role, current_bank_role):
+        return (current_bank_role / starting_bank_role - 1) * 100
+
+    
+    st.title('Performance Tracking')
+
+    
+    file_path = 'EV Performance.xlsx'  
+
+    # Column names
+    column_name_balance = 'Balance'  # Replace with the actual name of your balance column
+    column_name_outcomes = 'Win'  # Replace with the actual name of your outcomes column
+
+    # Selection logic
+    if selection == 'Performance Tracking':
+        # Get the current bank role
+        current_bank_role = get_current_value(file_path, column_name_balance)
+
+        # Read Excel file for outcomes
+        df_outcomes = pd.read_excel(file_path)
+
+        # Extract the specified column for outcomes
+        outcomes_column = df_outcomes[column_name_outcomes]
+
+        # Call the function with the correct column
+        result = calculate_win_loss_push(outcomes_column)
+
+        # Calculate percentage return
+        starting_bank_role = 250  # Assuming 'starting_bank_role' is 250 (as mentioned in your code)
+        percentage_return = calculate_percentage_return(starting_bank_role, current_bank_role)
+
+        # Set color based on the sign of percentage return
+        color = 'green' if percentage_return >= 0 else 'red'
+
+        # Display current record and percentage return
+        st.subheader(result)
+        st.write(f'Starting Bank Role = {starting_bank_role} | Current Bank Role = {current_bank_role}')
+
+        # Format the percentage return for display
+        formatted_percentage_return = f'<span style="font-size:24px; color:{color}; font-weight:bold;">{percentage_return:.2f}%</span>'
+        # Use st.markdown for displaying HTML content
+        st.markdown(f'Percentage Return: {formatted_percentage_return}', unsafe_allow_html=True)
+
+        # Create line chart
+        fig = px.line(df_outcomes, x='Date', y=['Starting Balance', 'Current Balance'], labels={'value': 'Balance'})
+
+        # Convert 'Date' column to string
+        df_outcomes['Date'] = df_outcomes['Date'].astype(str)
+
+        # Display the chart using st.plotly_chart
+        st.plotly_chart(fig, use_container_width=True)
+
