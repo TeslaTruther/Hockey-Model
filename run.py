@@ -44,7 +44,7 @@ def adjust_date_by_offset(date_column, time_zone_offset):
 time_zone = pytz.timezone('America/Los_Angeles')
 
 # Use a relative path to the Excel file
-excel_file = '2024 Schedule.xlsx'
+excel_file = 'nhl.xlsx'
 
 # Load data from "Game Data" sheet
 game_data = pd.read_excel(excel_file, sheet_name="test")
@@ -104,7 +104,7 @@ elif selection == 'NHL Model':
         # Calculate and display the over/under odds, implied probabilities, and projected scores based on the selected method
         if selected_method == 'Decimal':
             # Calculate and display the over/under odds, implied probabilities, and projected scores
-            today_games['Projected_Score'] = today_games['hometotal'] + today_games['vistotal']
+            today_games['Projected_Score'] = (today_games['hometotal'] + today_games['vistotal']) 
 
             # Calculate the projected Money Line odds
             today_games['Projected_Line'] = 0.55 * today_games['ml1'] + 0.45 * today_games['ml2']
@@ -113,7 +113,7 @@ elif selection == 'NHL Model':
             today_games['Constant'] = np.round(today_games['Projected_Score'] / 0.5) * 0.5
 
             # Set the standard deviation
-            std_deviation_overunder = 2.0
+            std_deviation_overunder = 1.75
             std_deviation_ml = 2.5
 
             # Calculate implied prob for ML
@@ -171,7 +171,7 @@ elif selection == 'NHL Model':
         # Calculate and display the over/under odds, implied probabilities, and projected scores based on the selected method
         if selected_method == 'Decimal':
             # Calculate and display the over/under odds, implied probabilities, and projected scores
-            tomorrow_games['Projected_Score'] = tomorrow_games['hometotal'] + tomorrow_games['vistotal']
+            tomorrow_games['Projected_Score'] = (tomorrow_games['hometotal'] + tomorrow_games['vistotal']) 
 
             # Calculate the projected Money Line odds
             tomorrow_games['Projected_Line'] = 0.55 * tomorrow_games['ml1'] + 0.45 * tomorrow_games['ml2']
@@ -180,7 +180,7 @@ elif selection == 'NHL Model':
             tomorrow_games['Constant'] = np.round(tomorrow_games['Projected_Score'] / 0.5) * 0.5
 
             # Set the standard deviation
-            std_deviation_overunder = 2.0
+            std_deviation_overunder = 1.75
             std_deviation_ml = 2.5
 
             # Calculate implied prob for ML
