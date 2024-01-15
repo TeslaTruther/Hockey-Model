@@ -43,38 +43,40 @@ def adjust_date_by_offset(date_column, time_zone_offset):
 # Set the time zone to Pacific Time (UTC-8)
 time_zone = pytz.timezone('America/Los_Angeles')
 
-# Use a relative path to the Excel file
-excel_file = 'nhl.xlsx'
 
-# Load data from "Game Data" sheet
-game_data = pd.read_excel(excel_file, sheet_name="test")
-
-# Convert 'Date' column to datetime format and adjust for Pacific Time
-game_data['Date'] = pd.to_datetime(game_data['Date']).dt.tz_localize(time_zone)
-
-# Get today's date dynamically in Pacific Time
-today = datetime.now(time_zone).replace(hour=0, minute=0, second=0, microsecond=0)
-
-# Filter the DataFrame to get today's games
-today_games = game_data[(game_data['Date'] >= today) & (game_data['Date'] < today + pd.DateOffset(1))]
-
-# Get tomorrow's date dynamically in Pacific Time
-tomorrow = today + timedelta(days=1)
-tomorrow_start = tomorrow.replace(hour=0, minute=0, second=0, microsecond=0)
-tomorrow_end = tomorrow_start + pd.DateOffset(1)
-tomorrow_games = game_data[(game_data['Date'] >= tomorrow_start) & (game_data['Date'] < tomorrow_end)]
 
 # Sidebar with a smaller width
-selection = st.sidebar.radio('Hockey Locks 🔒', ['Home', 'NHL Model', 'Performance Tracking'])
+selection = st.sidebar.radio('Hockey Locks 🔒', [' Home', '🏒 NHL Model', '🏀 NBA Model', '💲Performance Tracking'])
 
-if selection == 'Home':
+if selection == ' Home':
     # Main content
     st.title("Welcome to Hockey Locks :lock:")
     st.write("This app uses linear regression to generate odds using a combination of real time player and team data.")
     st.write("Use this tool to find inefficient odds and make positive EV bets.")   
      
     st.image(resized_pandas[0])      
-elif selection == 'NHL Model':
+elif selection == '🏒 NHL Model':
+        # Use a relative path to the Excel file
+    excel_file = 'nhl.xlsx'
+
+    # Load data from "Game Data" sheet
+    game_data = pd.read_excel(excel_file, sheet_name="test")
+
+    # Convert 'Date' column to datetime format and adjust for Pacific Time
+    game_data['Date'] = pd.to_datetime(game_data['Date']).dt.tz_localize(time_zone)
+
+    # Get today's date dynamically in Pacific Time
+    today = datetime.now(time_zone).replace(hour=0, minute=0, second=0, microsecond=0)
+
+    # Filter the DataFrame to get today's games
+    today_games = game_data[(game_data['Date'] >= today) & (game_data['Date'] < today + pd.DateOffset(1))]
+
+    # Get tomorrow's date dynamically in Pacific Time
+    tomorrow = today + timedelta(days=1)
+    tomorrow_start = tomorrow.replace(hour=0, minute=0, second=0, microsecond=0)
+    tomorrow_end = tomorrow_start + pd.DateOffset(1)
+    tomorrow_games = game_data[(game_data['Date'] >= tomorrow_start) & (game_data['Date'] < tomorrow_end)]
+
     st.header("How the Model Works")
     st.write("Compare these odds to your sportsbook's odds. If my projected odds are lower than the sportsbook's odds, place the bet.")
     st.subheader("Model Considerations")
@@ -92,7 +94,7 @@ elif selection == 'NHL Model':
         """
         <style>
         div[data-baseweb="select"] {
-            max-width: 150px; /* Adjust the width as needed */
+            max-width: 250px; /* Adjust the width as needed */
         }
         </style>
         """,
@@ -168,7 +170,7 @@ elif selection == 'NHL Model':
 
                 
     if st.button("Generate Tomorrow's Odds", key="get_tomorrows_odds"):
-        # Calculate and display the over/under odds, implied probabilities, and projected scores based on the selected method
+       
         if selected_method == 'Decimal':
             # Calculate and display the over/under odds, implied probabilities, and projected scores
             tomorrow_games['Projected_Score'] = (tomorrow_games['hometotal'] + tomorrow_games['vistotal']) 
@@ -232,10 +234,125 @@ elif selection == 'NHL Model':
             st.subheader('Coming soon - Decimal only')
 
                     
-                                 
+elif selection == '🏀 NBA Model':
+    st.subheader('Work In Progress - Coming Soon')                                 
+        # Use a relative path to the Excel file
+    excel_file = 'nba.xlsx'
 
+    # Load data from "Game Data" sheet
+    game_data = pd.read_excel(excel_file, sheet_name="2023schedule")
 
-elif selection == 'Performance Tracking':
+    # Convert 'Date' column to datetime format and adjust for Pacific Time
+    game_data['Date'] = pd.to_datetime(game_data['Date']).dt.tz_localize(time_zone)
+
+    # Get today's date dynamically in Pacific Time
+    today = datetime.now(time_zone).replace(hour=0, minute=0, second=0, microsecond=0)
+
+    # Filter the DataFrame to get today's games
+    today_games = game_data[(game_data['Date'] >= today) & (game_data['Date'] < today + pd.DateOffset(1))]
+
+    # Get tomorrow's date dynamically in Pacific Time
+    tomorrow = today + timedelta(days=1)
+    tomorrow_start = tomorrow.replace(hour=0, minute=0, second=0, microsecond=0)
+    tomorrow_end = tomorrow_start + pd.DateOffset(1)
+    tomorrow_games = game_data[(game_data['Date'] >= tomorrow_start) & (game_data['Date'] < tomorrow_end)]
+    # Define a list of available methods for calculating odds
+    calculation_methods = ['Decimal', 'American']
+
+    # Add a selectbox to choose the calculation method
+    selected_method = st.selectbox('Select Odds:', calculation_methods)
+
+    # Apply custom CSS to make the select box smaller
+    st.markdown(
+        """
+        <style>
+        div[data-baseweb="select"] {
+            max-width: 250px; /* Adjust the width as needed */
+        }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+    if st.button("Generate Todays's Odds", key="get_todays_odds"):
+        
+            if selected_method == 'Decimal':
+                # Calculate the projected Money Line odds
+                    today_games['Projected_Line'] =today_games['ml1'] 
+
+                
+
+                    # Set the standard deviation
+                    std_deviation_ml = 13.2
+
+                    # Calculate implied prob for ML
+                    today_games['ML_Home_Prob'] = today_games.apply(
+                        lambda row: stats.norm.cdf((row.Projected_Line) / std_deviation_ml),
+                        axis=1
+                    )
+
+                    today_games['ML_Away_Prob'] = today_games.apply(
+                        lambda row: stats.norm.cdf(- (row.Projected_Line) / std_deviation_ml),
+                        axis=1
+                    )
+
+                    # Convert implied probabilities to decimal odds for ML
+                    today_games['ML_Home_Decimal_Odds'] = 1 / today_games['ML_Home_Prob']
+                    today_games['ML_Away_Decimal_Odds'] = 1 / today_games['ML_Away_Prob']
+
+                    
+                    # Display the odds for today's games in a Streamlit table
+                    st.write("### Today's Games and Projected Odds:")
+                    for i, game in enumerate(today_games.itertuples(), start=1):                   
+                        st.subheader(f"{game.Visitor} *@* {game.Home}")
+                        st.write(f"{game.Home} | **Projected Odds:** {game.ML_Home_Decimal_Odds:.3f}")
+                        st.write(f"{game.Visitor} | **Projected Odds:** {game.ML_Away_Decimal_Odds:.3f}")
+            
+            elif selected_method == 'American':
+                st.subheader('Coming soon - Decimal only')  
+# Button to get today's odds
+    if st.button("Generate Tomorrow's Odds", key="get_tomorrow_odds"):
+        # Calculate and display the over/under odds, implied probabilities, and projected scores based on the selected method
+            if selected_method == 'Decimal':
+                # Calculate and display the over/under odds, implied probabilities, and projected scores
+                
+
+                # Calculate the projected Money Line odds
+                tomorrow_games['Projected_Line'] =tomorrow_games['ml1'] 
+
+            
+
+                # Set the standard deviation
+                std_deviation_ml = 13.2
+
+                # Calculate implied prob for ML
+                tomorrow_games['ML_Home_Prob'] = tomorrow_games.apply(
+                    lambda row: stats.norm.cdf((row.Projected_Line) / std_deviation_ml),
+                    axis=1
+                )
+
+                tomorrow_games['ML_Away_Prob'] = tomorrow_games.apply(
+                    lambda row: stats.norm.cdf(- (row.Projected_Line) / std_deviation_ml),
+                    axis=1
+                )
+
+                # Convert implied probabilities to decimal odds for ML
+                tomorrow_games['ML_Home_Decimal_Odds'] = 1 / tomorrow_games['ML_Home_Prob']
+                tomorrow_games['ML_Away_Decimal_Odds'] = 1 / tomorrow_games['ML_Away_Prob']
+
+                
+                # Display the odds for today's games in a Streamlit table
+                st.write("### Today's Games and Projected Odds:")
+                for i, game in enumerate(tomorrow_games.itertuples(), start=1):                   
+                    st.subheader(f"{game.Visitor} *@* {game.Home}")
+                    st.write(f"{game.Home} | **Projected Odds:** {game.ML_Home_Decimal_Odds:.3f}")
+                    st.write(f"{game.Visitor} | **Projected Odds:** {game.ML_Away_Decimal_Odds:.3f}")
+                
+
+            elif selected_method == 'American':
+                st.subheader('Coming Soon - Decimal Only')  
+    
+
+elif selection == '💲Performance Tracking':
     # Define functions
     def get_current_value(file_path, column_name):
         df = pd.read_excel(file_path)
@@ -262,7 +379,7 @@ elif selection == 'Performance Tracking':
     column_name_outcomes = 'Win'  # Replace with the actual name of your outcomes column
 
     # Selection logic
-    if selection == 'Performance Tracking':
+    if selection == '💲Performance Tracking':
         # Get the current bank role
         current_bank_role = get_current_value(file_path, column_name_balance)
 
@@ -284,7 +401,7 @@ elif selection == 'Performance Tracking':
 
         # Display current record and percentage return
         st.subheader(result)
-        st.write(f'Starting Bank Role = {starting_bank_role} | Current Bank Role = {current_bank_role}')
+        st.write(f'Starting Bank Roll = {starting_bank_role} | Current Bank Roll = {current_bank_role}')
 
         # Format the percentage return for display
         formatted_percentage_return = f'<span style="font-size:24px; color:{color}; font-weight:bold;">{percentage_return:.2f}%</span>'
