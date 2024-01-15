@@ -46,9 +46,9 @@ time_zone = pytz.timezone('America/Los_Angeles')
 
 
 # Sidebar with a smaller width
-selection = st.sidebar.radio('Hockey Locks 🔒', [' Home', '🏒 NHL Model', '🏀 NBA Model', '💲Performance Tracking'])
+selection = st.sidebar.radio('Hockey Locks 🔒', ['🏠 Home', '🏒 NHL Model', '🏀 NBA Model', '💲Performance Tracking'])
 
-if selection == ' Home':
+if selection == '🏠 Home':
     # Main content
     st.title("Welcome to Hockey Locks :lock:")
     st.write("This app uses linear regression to generate odds using a combination of real time player and team data.")
@@ -235,7 +235,7 @@ elif selection == '🏒 NHL Model':
 
                     
 elif selection == '🏀 NBA Model':
-    st.subheader('Work In Progress - Coming Soon')                                 
+                                   
         # Use a relative path to the Excel file
     excel_file = 'nba.xlsx'
 
@@ -282,7 +282,7 @@ elif selection == '🏀 NBA Model':
                 
 
                     # Set the standard deviation
-                    std_deviation_ml = 13.2
+                    std_deviation_ml = 12
 
                     # Calculate implied prob for ML
                     today_games['ML_Home_Prob'] = today_games.apply(
@@ -322,7 +322,7 @@ elif selection == '🏀 NBA Model':
             
 
                 # Set the standard deviation
-                std_deviation_ml = 13.2
+                std_deviation_ml = 12
 
                 # Calculate implied prob for ML
                 tomorrow_games['ML_Home_Prob'] = tomorrow_games.apply(
