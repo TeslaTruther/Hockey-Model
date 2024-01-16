@@ -10,6 +10,7 @@ import plotly.express as px
 
 st.set_page_config(page_title="Hockey Locks", page_icon="🔒", layout="wide")
 
+
 st.markdown('<link rel="stylesheet" type="text/css" href="style.css">', unsafe_allow_html=True)
 
 class LazyImage:
@@ -46,7 +47,7 @@ time_zone = pytz.timezone('America/Los_Angeles')
 
 
 # Sidebar with a smaller width
-selection = st.sidebar.radio('Hockey Locks 🔒', ['🏠 Home', '🏒 NHL Model', '🏀 NBA Model', '💲Performance Tracking'])
+selection = st.sidebar.radio('Hockey Locks 🔒', ['🏠 Home', '🏒 NHL Model', 'NHL Power Rankings', '🏀 NBA Model', '💲Performance Tracking'])
 
 if selection == '🏠 Home':
     # Main content
@@ -230,7 +231,35 @@ elif selection == '🏒 NHL Model':
                     f"**Over Under Odds:** Over: {game.Totals_Probability['Over']:.2f}, Under: {game.Totals_Probability['Under']:.2f}")
         elif selected_method == 'American':
             st.subheader('Coming soon - Decimal only')
+elif selection == 'NHL Power Rankings':
+    # Assuming 'Power Rankings' sheet contains the data
+    excel_file = 'nhl.xlsx'
+    sheet_name = 'Power Rankings'
 
+    # Load data from the specified sheet
+    game_data = pd.read_excel(excel_file, sheet_name=sheet_name)
+
+    # Sort the data based on the 'powerranking' column (assuming it's in column 'powerranking')
+    sorted_data = game_data.sort_values(by='powerranking')
+
+    # Create a two-column layout
+    col1, col2 = st.columns(2)
+
+    # Display content in the left column
+    with col1:  
+        st.header("Team Power Rankings")
+
+        # Display the sorted data in a Streamlit table
+        st.table(sorted_data[['Team', 'powerranking']].to_numpy().tolist())
+
+    # Display content in the right column
+    with col2:
+        st.header("Top 10 Players")
+        # Add content to the right column as needed
+        st.write("You can put additional content here.")
+
+   
+    
                     
 elif selection == '🏀 NBA Model':
                                    
