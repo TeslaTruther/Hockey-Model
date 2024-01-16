@@ -79,8 +79,6 @@ elif selection == '🏒 NHL Model':
 
     st.header("How the Model Works")
     st.write("Compare these odds to your sportsbook's odds. If my projected odds are lower than the sportsbook's odds, place the bet.")
-    st.subheader("Model Considerations")
-    st.write("The model does not incorporate back-to-back games.")
     st.subheader("Run The Model:")
 
     # Define a list of available methods for calculating odds
@@ -115,8 +113,8 @@ elif selection == '🏒 NHL Model':
             today_games['Constant'] = np.round(today_games['Projected_Score'] / 0.5) * 0.5
 
             # Set the standard deviation
-            std_deviation_overunder = 1.75
-            std_deviation_ml = 2.5
+            std_deviation_overunder = 1.67
+            std_deviation_ml = 2.48
 
             # Calculate implied prob for ML
             today_games['ML_Home_Prob'] = today_games.apply(
@@ -182,8 +180,8 @@ elif selection == '🏒 NHL Model':
             tomorrow_games['Constant'] = np.round(tomorrow_games['Projected_Score'] / 0.5) * 0.5
 
             # Set the standard deviation
-            std_deviation_overunder = 1.75
-            std_deviation_ml = 2.5
+            std_deviation_overunder = 1.67
+            std_deviation_ml = 2.48
 
             # Calculate implied prob for ML
             tomorrow_games['ML_Home_Prob'] = tomorrow_games.apply(
@@ -282,7 +280,7 @@ elif selection == '🏀 NBA Model':
                 
 
                     # Set the standard deviation
-                    std_deviation_ml = 12
+                    std_deviation_ml = 14.2
 
                     # Calculate implied prob for ML
                     today_games['ML_Home_Prob'] = today_games.apply(
@@ -322,7 +320,7 @@ elif selection == '🏀 NBA Model':
             
 
                 # Set the standard deviation
-                std_deviation_ml = 12
+                std_deviation_ml = 14.2
 
                 # Calculate implied prob for ML
                 tomorrow_games['ML_Home_Prob'] = tomorrow_games.apply(
