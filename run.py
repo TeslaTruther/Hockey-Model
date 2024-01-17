@@ -277,7 +277,7 @@ elif selection == '🥅 NHL Power Rankings':
          # Display the sorted data in a Streamlit table with headers
             # Display the sorted data in a Streamlit table with headers
         
-        st.subheader(sorted_data2[['Rank', 'bestrookies', 'rook team']].reset_index(drop=True))
+        st.dataframe(sorted_data2[['Rank', 'bestrookies', 'rook team']].reset_index(drop=True))
    
     
                     
