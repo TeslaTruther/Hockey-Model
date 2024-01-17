@@ -246,7 +246,7 @@ elif selection == '🥅 NHL Power Rankings':
 
     # Sort the data based on the 'powerranking' column (assuming it's in column 'powerranking')
     sorted_data = game_data.sort_values(by='powerranking')
-
+    
     # Load data from the specified sheet in the second Excel file
     game_data2 = pd.read_excel(excel_file2, sheet_name=sheet_name2)
 
@@ -259,39 +259,29 @@ elif selection == '🥅 NHL Power Rankings':
     # Display content in the left column
     with col1:  
         st.subheader("Model's Team Rankings")
-
-
         # Rename the columns for display
         display_data = sorted_data[['powerranking','Team']].rename(columns={'Team': 'Team', 'powerranking': 'Power Ranking'})
-        st. dataframe(display_data, hide_index=True, column_config={"B": None})
+        st.dataframe(display_data, hide_index=True, column_config={"B": None})
 
-           
         st.subheader("Model's Top 5 Goalies")
         display_data = sorted_data2[['topgoalie','golteam']].rename(columns={'topgoalie': 'Goalie', 'golteam': 'Team'})
-
-       # Display only the top 5 rows in a Streamlit dataframe
+        # Display only the top 5 rows in a Streamlit dataframe
         st.dataframe(display_data.head(5), hide_index=True, column_config={"B": None})
-      
 
     # Display content in the right column
     with col2:
         st.subheader("Model's Top 15 Players")
-        # Display the sorted data in a Streamlit table
-            # Rename the columns for display
+        # Rename the columns for display
         display_data = sorted_data2[['topplayer','playteam']].rename(columns={'topplayer': 'Player', 'playteam': 'Team'})
+        # Display the sorted data in a Streamlit dataframe
+        st.dataframe(display_data, hide_index=True, column_config={"B": None})
 
-       # Display the sorted data in a Streamlit dataframe
-        st. dataframe(display_data, hide_index=True, column_config={"B": None})
-       
         st.subheader("Model's Top Rookies")
-         # Display the sorted data in a Streamlit table with headers
-            # Display the sorted data in a Streamlit table with headers
-        
+        # Display the sorted data in a Streamlit table with headers
         display_data = sorted_data2[['bestrookies','rook team']].rename(columns={'bestrookies': 'Rookie', 'rook team': 'Team'})
         # Display the sorted data in a Streamlit dataframe
-        st. dataframe(display_data, hide_index=True, column_config={"B": None})
+        st.dataframe(display_data, hide_index=True, column_config={"B": None})
 
-     
     
                     
 elif selection == '🏀 NBA Model':
