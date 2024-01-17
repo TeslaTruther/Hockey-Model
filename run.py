@@ -260,27 +260,27 @@ elif selection == '🥅 NHL Power Rankings':
     with col1:  
         st.subheader("Model's Team Rankings")
         # Rename the columns for display
-        display_data = sorted_data[['powerranking','Team']].rename(columns={'Team': 'Team', 'powerranking': 'Power Ranking'})
-        st.dataframe(display_data, hide_index=True, column_config={"B": None})
+        display_data_team = sorted_data[['powerranking', 'Team']].rename(columns={'Team': 'Team', 'powerranking': 'Power Ranking'})
+        # Display the sorted data in a Streamlit dataframe
+        st.dataframe(display_data_team)
 
         st.subheader("Model's Top 5 Goalies")
-        display_data = sorted_data2[['topgoalie','golteam']].rename(columns={'topgoalie': 'Goalie', 'golteam': 'Team'})
+        display_data_goalies = sorted_data2[['topgoalie', 'golteam']].rename(columns={'topgoalie': 'Goalie', 'golteam': 'Team'})
         # Display only the top 5 rows in a Streamlit dataframe
-        st.dataframe(display_data.head(5), hide_index=True, column_config={"B": None})
+        st.dataframe(display_data_goalies.head(5))
 
     # Display content in the right column
     with col2:
         st.subheader("Model's Top 15 Players")
-        # Rename the columns for display
-        display_data = sorted_data2[['topplayer','playteam']].rename(columns={'topplayer': 'Player', 'playteam': 'Team'})
+        display_data_players = sorted_data2[['topplayer', 'playteam']].rename(columns={'topplayer': 'Player', 'playteam': 'Team'})
         # Display the sorted data in a Streamlit dataframe
-        st.dataframe(display_data, hide_index=True, column_config={"B": None})
+        st.dataframe(display_data_players)
 
         st.subheader("Model's Top Rookies")
-        # Display the sorted data in a Streamlit table with headers
-        display_data = sorted_data2[['bestrookies','rook team']].rename(columns={'bestrookies': 'Rookie', 'rook team': 'Team'})
+        display_data_rookies = sorted_data2[['bestrookies', 'rook team']].rename(columns={'bestrookies': 'Rookie', 'rook team': 'Team'})
         # Display the sorted data in a Streamlit dataframe
-        st.dataframe(display_data, hide_index=True, column_config={"B": None})
+        st.dataframe(display_data_rookies)
+
 
     
                     
