@@ -86,10 +86,10 @@ elif selection == '🏒 NHL Model':
         st.subheader("Run The Model:")
 
         # Define a list of available methods for calculating odds
-        calculation_methods = ['Decimal', 'American']
+        ##calculation_methods = ['Decimal', 'American']
 
         # Add a selectbox to choose the calculation method
-        selected_method = st.selectbox('Select Odds:', calculation_methods)
+       ## selected_method = st.selectbox('Select Odds:', calculation_methods)
 
         # Apply custom CSS to make the select box smaller
         st.markdown(
@@ -106,12 +106,12 @@ elif selection == '🏒 NHL Model':
     # Button to get today's odds
         if st.button("Generate Today's Odds", key="get_today_odds"):
             # Calculate and display the over/under odds, implied probabilities, and projected scores based on the selected method
-            if selected_method == 'Decimal':
+            ##if selected_method == 'Decimal':
                 # Calculate and display the over/under odds, implied probabilities, and projected scores
                 today_games['Projected_Score'] = (today_games['hometotal'] + today_games['vistotal']) 
 
                 # Calculate the projected Money Line odds
-                today_games['Projected_Line'] = 0.55 * today_games['ml1'] + 0.45 * today_games['ml2']
+                today_games['Projected_Line'] = 0.3 * today_games['ml1'] + 0.45 * today_games['ml2'] + 0.25 * today_games['ml3']
 
                 # Round the constant to the nearest 0.5 using round_half_even
                 today_games['Constant'] = np.round(today_games['Projected_Score'] / 0.5) * 0.5
@@ -164,8 +164,8 @@ elif selection == '🏒 NHL Model':
                     st.write(f"Projected Over Under Line: {game.Constant:.1f}")            
                     st.write(f"**Over Under Odds:** Over: {game.Totals_Probability['Over']:.2f}, Under: {game.Totals_Probability['Under']:.2f}")
 
-            elif selected_method == 'American':
-                st.subheader('Coming Soon - Decimal Only')
+            ##elif selected_method == 'American':
+                ##st.subheader('Coming Soon - Decimal Only')
 
 
           
@@ -173,12 +173,12 @@ elif selection == '🏒 NHL Model':
                     
         if st.button("Generate Tomorrow's Odds", key="get_tomorrows_odds"):
         
-            if selected_method == 'Decimal':
+            ##if selected_method == 'Decimal':
                 # Calculate and display the over/under odds, implied probabilities, and projected scores
                 tomorrow_games['Projected_Score'] = (tomorrow_games['hometotal'] + tomorrow_games['vistotal']) 
 
                 # Calculate the projected Money Line odds
-                tomorrow_games['Projected_Line'] = 0.55 * tomorrow_games['ml1'] + 0.45 * tomorrow_games['ml2']
+                tomorrow_games['Projected_Line'] = 0.3 * tomorrow_games['ml1'] + 0.45 * tomorrow_games['ml2'] + 0.25 * tomorrow_games['ml3']
 
                 # Round the constant to the nearest 0.5 using round_half_even
                 tomorrow_games['Constant'] = np.round(tomorrow_games['Projected_Score'] / 0.5) * 0.5
@@ -232,8 +232,8 @@ elif selection == '🏒 NHL Model':
                     st.write(f"Projected Over Under Line: {game.Constant:.1f}")
                     st.write(
                         f"**Over Under Odds:** Over: {game.Totals_Probability['Over']:.2f}, Under: {game.Totals_Probability['Under']:.2f}")
-            elif selected_method == 'American':
-                st.subheader('Coming soon - Decimal only')
+            ##elif selected_method == 'American':
+                ##st.subheader('Coming soon - Decimal only')
 elif selection == '🥅 NHL Power Rankings':
     # Assuming 'Power Rankings' sheet contains the data
     excel_file = 'nhl.xlsx'
@@ -254,31 +254,44 @@ elif selection == '🥅 NHL Power Rankings':
     sorted_data2 = game_data2.sort_values(by='Rank')
     
     # Create a two-column layout
-    col1, col2, col3 = st.columns(3)  
+    col1, col2 = st.columns(2)  
 
     # Display content in the left column
     with col1:  
-        st.subheader("Model Team Rankings")
+        st.subheader("Model's Team Rankings")
 
-        
-        # Display the sorted data in a Streamlit dataframe
-        st.dataframe(sorted_data[['Team', 'powerranking']].reset_index(drop=True))
-        
+
+        # Rename the columns for display
+        display_data = sorted_data[['powerranking','Team']].rename(columns={'Team': 'Team', 'powerranking': 'Power Ranking'})
+        st. dataframe(display_data, hide_index=True, column_config={"B": None})
+
+           
+        st.subheader("Model's Top 5 Goalies")
+        display_data = sorted_data2[['topgoalie','golteam']].rename(columns={'topgoalie': 'Goalie', 'golteam': 'Team'})
+
+       # Display only the top 5 rows in a Streamlit dataframe
+        st.dataframe(display_data.head(5), hide_index=True, column_config={"B": None})
       
 
     # Display content in the right column
     with col2:
         st.subheader("Model's Top 15 Players")
         # Display the sorted data in a Streamlit table
-        st.dataframe(sorted_data2[['Rank', 'topplayer', 'playteam']].to_numpy().tolist())
+            # Rename the columns for display
+        display_data = sorted_data2[['topplayer','playteam']].rename(columns={'topplayer': 'Player', 'playteam': 'Team'})
 
-    with col3:
+       # Display the sorted data in a Streamlit dataframe
+        st. dataframe(display_data, hide_index=True, column_config={"B": None})
+       
         st.subheader("Model's Top Rookies")
          # Display the sorted data in a Streamlit table with headers
             # Display the sorted data in a Streamlit table with headers
         
-        st.dataframe(sorted_data2[['Rank', 'bestrookies', 'rook team']].reset_index(drop=True))
-   
+        display_data = sorted_data2[['bestrookies','rook team']].rename(columns={'bestrookies': 'Rookie', 'rook team': 'Team'})
+        # Display the sorted data in a Streamlit dataframe
+        st. dataframe(display_data, hide_index=True, column_config={"B": None})
+
+     
     
                     
 elif selection == '🏀 NBA Model':
@@ -450,7 +463,7 @@ elif selection == '💲Performance Tracking':
 
         # Display current record and percentage return
         st.subheader(result)
-        st.write(f'Starting Bank Roll = {starting_bank_role} | Current Bank Roll = {current_bank_role}')
+        st.write(f'Starting Bank Roll = {starting_bank_role} | Current Bank Roll = {current_bank_role:.2f}')
 
         # Format the percentage return for display
         formatted_percentage_return = f'<span style="font-size:24px; color:{color}; font-weight:bold;">{percentage_return:.2f}%</span>'
