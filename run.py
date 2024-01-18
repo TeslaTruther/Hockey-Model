@@ -82,7 +82,7 @@ elif selection == '🏒 NHL Model':
         tomorrow_games = game_data[(game_data['Date'] >= tomorrow_start) & (game_data['Date'] < tomorrow_end)]
 
         st.header("How the Model Works")
-        st.write("Compare these odds to your sportsbook's odds. If my projected odds are lower than the sportsbook's odds, place the bet.")
+        st.write("The model generates odds from its projected probability of outcomes. Think of these odds as the minimum return you would require to make a positive EV bet.")
         st.subheader("Run The Model:")
 
         # Define a list of available methods for calculating odds
@@ -258,29 +258,31 @@ elif selection == '🥅 NHL Power Rankings':
 
     # Display content in the left column
     with col1:  
-        st.subheader("Model's Team Rankings")
+        st.subheader("Team Rankings")
         # Rename the columns for display
-        display_data_team = sorted_data[['powerranking', 'Team']].rename(columns={'Team': 'Team', 'powerranking': 'Power Ranking'})
-        # Display the sorted data in a Streamlit dataframe
-        st.dataframe(display_data_team)
+        display_data = sorted_data[['powerranking','Team']].rename(columns={'Team': 'Team', 'powerranking': 'Power Ranking'})
+        st.dataframe(display_data, hide_index=True, column_config={"B": None})
 
-        st.subheader("Model's Top 5 Goalies")
-        display_data_goalies = sorted_data2[['topgoalie', 'golteam']].rename(columns={'topgoalie': 'Goalie', 'golteam': 'Team'})
+        st.subheader("Model's Top Goalies")
+        display_data = sorted_data2[['Rank','topgoalie','golteam', 'gs','sv%','qs']].rename(columns={'topgoalie': 'Goalie', 'golteam': 'Team', 'gs' : 'Games Started','sv%':'SV%','qs':'Quality Starts'})
         # Display only the top 5 rows in a Streamlit dataframe
-        st.dataframe(display_data_goalies.head(5))
+        st.dataframe(display_data.head(10), hide_index=True, column_config={"B": None})
 
     # Display content in the right column
     with col2:
-        st.subheader("Model's Top 15 Players")
-        display_data_players = sorted_data2[['topplayer', 'playteam']].rename(columns={'topplayer': 'Player', 'playteam': 'Team'})
+        st.subheader("Model's Top Players")
+        # Rename the columns for display
+         # Rename the columns for display and round 'mpg' to one decimal place
+        display_data = sorted_data2[['Rank','topplayer', 'playteam','pos', 'gp', 'g', 'p', 'mpg']].rename(columns={'Rank': 'Rank','topplayer': 'Player', 'playteam': 'Team','pos': 'Pos', 'gp': 'GP', 'g':'Goals','p':'Points', 'mpg': 'MPG'})
+        display_data['MPG'] = display_data['MPG'].round(1)  # Round 'mpg' to one decimal place
         # Display the sorted data in a Streamlit dataframe
-        st.dataframe(display_data_players)
+        st.dataframe(display_data, hide_index=True, column_config={"B": None})
 
         st.subheader("Model's Top Rookies")
-        display_data_rookies = sorted_data2[['bestrookies', 'rook team']].rename(columns={'bestrookies': 'Rookie', 'rook team': 'Team'})
+        display_data = sorted_data2[['Rank','bestrookies', 'rook team', 'pos1', 'gp1', 'g1','p1','mpg1']].rename(columns={'Rank': 'Rank','bestrookies': 'Rookie', 'rook team': 'Team', 'gp1': 'GP', 'pos1': 'Pos', 'mpg1': 'MPG','g1':'Goals','p1':'Points'})
+        display_data['MPG'] = display_data['MPG'].round(1)  # Round 'mpg' to one decimal place
         # Display the sorted data in a Streamlit dataframe
-        st.dataframe(display_data_rookies)
-
+        st.dataframe(display_data, hide_index=True, column_config={"B": None})
 
     
                     
