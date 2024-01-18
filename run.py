@@ -11,7 +11,16 @@ import plotly.express as px
 st.set_page_config(page_title="Hockey Locks", page_icon="🔒", layout="wide")
 
 
-st.markdown('<link rel="stylesheet" type="text/css" href="style.css">', unsafe_allow_html=True)
+
+
+# Custom theme configurations
+custom_theme = """
+    [theme]
+    primaryColor="#e62828"
+    backgroundColor="#2f2f2f"
+    secondaryBackgroundColor="#122687"
+    textColor="#f9f8f8"
+"""
 
 class LazyImage:
     def __init__(self, path):
@@ -284,6 +293,9 @@ elif selection == '🥅 NHL Power Rankings':
         # Display the sorted data in a Streamlit dataframe
         st.dataframe(display_data, hide_index=True,)
 
+
+
+
     
                     
 elif selection == '🏀 NBA Model':
@@ -470,4 +482,5 @@ elif selection == '💲Performance Tracking':
 
         # Display the chart using st.plotly_chart
         st.plotly_chart(fig, use_container_width=True)
+
 

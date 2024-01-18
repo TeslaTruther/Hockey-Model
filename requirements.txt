@@ -6,3 +6,4 @@ plotly==5.18.0
 openpyxl
 protobuf==3.20.1
 click==8.1.7
+python - 3.11.3
