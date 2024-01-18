@@ -1,18 +1,9 @@
 /* style.css */
-
-.custom-sidebar {
-    width: 200px;
-    background-color: #150;
-    padding: 20px;
-}
-
-.custom-sidebar .stRadio {
-    color: white;
-    padding: 8px;
-    font-size: 14px;
-    text-align: left;
-}
-
-.custom-sidebar .stRadio input:checked + label::before {
-    border: 2px solid white; /* Style the checked state */
-}
+import streamlit as st
+    custom_theme = """
+        [theme]
+        primaryColor="#e62828"
+        backgroundColor="#2f2f2f"
+        secondaryBackgroundColor="#122687"
+        textColor="#f9f8f8"
+    """

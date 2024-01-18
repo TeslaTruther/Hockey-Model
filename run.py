@@ -270,12 +270,12 @@ elif selection == '🥅 NHL Power Rankings':
         st.subheader("Team Rankings")
         # Rename the columns for display
         display_data = sorted_data[['powerranking','Team']].rename(columns={'Team': 'Team', 'powerranking': 'Power Ranking'})
-        st.dataframe(display_data, hide_index=True)
+        st.dataframe(display_data)
 
         st.subheader("Model's Top Goalies")
         display_data = sorted_data2[['Rank','topgoalie','golteam', 'gs','sv%','qs']].rename(columns={'topgoalie': 'Goalie', 'golteam': 'Team', 'gs' : 'Games Started','sv%':'SV%','qs':'Quality Starts'})
         # Display only the top 5 rows in a Streamlit dataframe
-        st.dataframe(display_data.head(10), hide_index=True)
+        st.dataframe(display_data.head(10))
 
     # Display content in the right column
     with col2:
@@ -285,13 +285,13 @@ elif selection == '🥅 NHL Power Rankings':
         display_data = sorted_data2[['Rank','topplayer', 'playteam','pos', 'gp', 'g', 'p', 'mpg']].rename(columns={'Rank': 'Rank','topplayer': 'Player', 'playteam': 'Team','pos': 'Pos', 'gp': 'GP', 'g':'Goals','p':'Points', 'mpg': 'MPG'})
         display_data['MPG'] = display_data['MPG'].round(1)  # Round 'mpg' to one decimal place
         # Display the sorted data in a Streamlit dataframe
-        st.dataframe(display_data, hide_index=True,)
+        st.dataframe(display_data)
 
         st.subheader("Model's Top Rookies")
         display_data = sorted_data2[['Rank','bestrookies', 'rook team', 'pos1', 'gp1', 'g1','p1','mpg1']].rename(columns={'Rank': 'Rank','bestrookies': 'Rookie', 'rook team': 'Team', 'gp1': 'GP', 'pos1': 'Pos', 'mpg1': 'MPG','g1':'Goals','p1':'Points'})
         display_data['MPG'] = display_data['MPG'].round(1)  # Round 'mpg' to one decimal place
         # Display the sorted data in a Streamlit dataframe
-        st.dataframe(display_data, hide_index=True,)
+        st.dataframe(display_data)
 
 
 
