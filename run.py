@@ -266,49 +266,53 @@ elif selection == '🥅 NHL Power Rankings':
     col1, col2 = st.columns(2)  
 
   
-    # Display content in the left column
+        # Display content in the left column
     with col1:
         st.subheader("Team Rankings")
-        
+
         # Rename the columns for display
         display_data = sorted_data[['powerranking', 'Team']].rename(columns={'Team': 'Team', 'powerranking': 'Power Ranking'})
 
         st.dataframe(display_data)
 
         st.subheader("Model's Top Goalies")
-        
+
         display_data = sorted_data2[['Rank', 'topgoalie', 'golteam', 'gs', 'sv%', 'qs']].rename(columns={'topgoalie': 'Goalie', 'golteam': 'Team', 'gs': 'Games Started', 'sv%': 'SV%', 'qs': 'Quality Starts'})
-        
-        display_data['Games Started'] = display_data['Games Started'].astype(int)
-        display_data['Quality Starts'] = display_data['Quality Starts'].astype(int)
-        
+
+        # Handle non-finite values before converting to integers
+        display_data['Games Started'] = display_data['Games Started'].fillna(0).astype(int)
+        display_data['Quality Starts'] = display_data['Quality Starts'].fillna(0).astype(int)
+
         # Display only the top 10 rows in a Streamlit dataframe
         st.dataframe(display_data.head(10))
 
     # Add your code for the right column here
     with col2:
         st.subheader("Model's Top Players")
-        
+
         # Rename the columns for display and round 'mpg' to one decimal place
         display_data = sorted_data2[['Rank','topplayer', 'playteam','pos', 'gp', 'g', 'p', 'mpg']].rename(columns={'Rank': 'Rank','topplayer': 'Player', 'playteam': 'Team','pos': 'Pos', 'gp': 'GP', 'g':'Goals','p':'Points', 'mpg': 'MPG'})
-        
-        display_data['MPG'] = display_data['MPG'].round(1)  # Round 'mpg' to one decimal place
-        display_data['Points'] = display_data['Points'].astype(int)
-        display_data['Goals'] = display_data['Goals'].astype(int)
-        display_data['GP'] = display_data['GP'].astype(int)
-        
+
+        # Handle non-finite values before rounding and converting to integers
+        display_data['MPG'] = display_data['MPG'].fillna(0).round(1)
+        display_data['Points'] = display_data['Points'].fillna(0).astype(int)
+        display_data['Goals'] = display_data['Goals'].fillna(0).astype(int)
+        display_data['GP'] = display_data['GP'].fillna(0).astype(int)
+
         # Display the sorted data in a Streamlit dataframe
         st.dataframe(display_data)
 
         st.subheader("Model's Top Rookies")
         display_data = sorted_data2[['Rank','bestrookies', 'rook team', 'pos1', 'gp1', 'g1','p1','mpg1']].rename(columns={'Rank': 'Rank','bestrookies': 'Rookie', 'rook team': 'Team', 'gp1': 'GP', 'pos1': 'Pos', 'mpg1': 'MPG','g1':'Goals','p1':'Points'})
-        display_data['MPG'] = display_data['MPG'].round(1)
-        display_data['Points'] = display_data['Points'].astype(int)
-        display_data['Goals'] = display_data['Goals'].astype(int)
-        display_data['GP'] = display_data['GP'].astype(int)
-        
-        # Display the sorted data in a Str
 
+        # Handle non-finite values before rounding and converting to integers
+        display_data['MPG'] = display_data['MPG'].fillna(0).round(1)
+        display_data['Points'] = display_data['Points'].fillna(0).astype(int)
+        display_data['Goals'] = display_data['Goals'].fillna(0).astype(int)
+        display_data['GP'] = display_data['GP'].fillna(0).astype(int)
+
+        # Display the sorted data in a Streamlit dataframe
+        st.dataframe(display_data)
 
 
 
