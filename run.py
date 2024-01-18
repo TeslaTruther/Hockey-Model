@@ -8,9 +8,7 @@ import os
 import scipy.stats as stats
 import plotly.express as px
 
-st.set_page_config(page_title="Hockey Locks", page_icon="🔒", layout="wide")
-
-
+st.set_page_config(page_title="Quantum Odds", page_icon="🔒", layout="wide")
 
 
 # Custom theme configurations
@@ -64,7 +62,9 @@ if selection == '🏠 Home':
     st.write("We generate odds to compete against sportsbooks.")
     st.write("Find inefficient markets and make positive EV bets.")   
      
-    st.image(resized_pandas[0])      
+    st.image(resized_pandas[0])    
+    # Add a URL at the bottom
+    st.markdown('Share this site: '"https://quantumodds.streamlit.app/")  
 elif selection == '🏒 NHL Model':
     
     if selection == '🏒 NHL Model':
@@ -270,22 +270,24 @@ elif selection == '🥅 NHL Power Rankings':
     with col1:
         st.subheader("Team Rankings")
 
-        # Rename the columns for display
+       # Rename the columns for display
         display_data = sorted_data[['powerranking', 'Team']].rename(columns={'Team': 'Team', 'powerranking': 'Power Ranking'})
 
-        st.dataframe(display_data)
+        # Display the DataFrame without the index column
+        st.dataframe(display_data, hide_index=True)
 
         st.subheader("Model's Top Goalies")
 
-        display_data = sorted_data2[['Rank', 'topgoalie', 'golteam', 'gs', 'sv%', 'qs']].rename(columns={'topgoalie': 'Goalie', 'golteam': 'Team', 'gs': 'Games Started', 'sv%': 'SV%', 'qs': 'Quality Starts'})
+        display_data = sorted_data2[['Rank', 'topgoalie', 'golteam', 'gs', 'sv%', 'qs']].rename(columns={'topgoalie': 'Goalie', 'golteam': 'Team', 'gs': 'GS', 'sv%': 'SV%', 'qs': 'Quality Starts'})
 
         # Handle non-finite values before converting to integers
-        display_data['Games Started'] = display_data['Games Started'].fillna(0).astype(int)
+        display_data['GS'] = display_data['GS'].fillna(0).astype(int)
         display_data['Quality Starts'] = display_data['Quality Starts'].fillna(0).astype(int)
+        
+        # Display the DataFrame without the index column
+        st.dataframe(display_data.head(10), hide_index=True)
 
-        # Display only the top 10 rows in a Streamlit dataframe
-        st.dataframe(display_data.head(10))
-
+        
     # Add your code for the right column here
     with col2:
         st.subheader("Model's Top Players")
@@ -294,25 +296,27 @@ elif selection == '🥅 NHL Power Rankings':
         display_data = sorted_data2[['Rank','topplayer', 'playteam','pos', 'gp', 'g', 'p', 'mpg']].rename(columns={'Rank': 'Rank','topplayer': 'Player', 'playteam': 'Team','pos': 'Pos', 'gp': 'GP', 'g':'Goals','p':'Points', 'mpg': 'MPG'})
 
         # Handle non-finite values before rounding and converting to integers
-        display_data['MPG'] = display_data['MPG'].fillna(0).round(1)
+        display_data['MPG'] = display_data['MPG'].apply(lambda x: f"{x:.1f}" if not pd.isnull(x) else "0.000")
+
         display_data['Points'] = display_data['Points'].fillna(0).astype(int)
         display_data['Goals'] = display_data['Goals'].fillna(0).astype(int)
         display_data['GP'] = display_data['GP'].fillna(0).astype(int)
 
-        # Display the sorted data in a Streamlit dataframe
-        st.dataframe(display_data)
+             
+        # Display the DataFrame without the index column
+        st.dataframe(display_data, hide_index=True)
 
         st.subheader("Model's Top Rookies")
         display_data = sorted_data2[['Rank','bestrookies', 'rook team', 'pos1', 'gp1', 'g1','p1','mpg1']].rename(columns={'Rank': 'Rank','bestrookies': 'Rookie', 'rook team': 'Team', 'gp1': 'GP', 'pos1': 'Pos', 'mpg1': 'MPG','g1':'Goals','p1':'Points'})
 
         # Handle non-finite values before rounding and converting to integers
-        display_data['MPG'] = display_data['MPG'].fillna(0).round(1)
+        display_data['MPG'] = display_data['MPG'].apply(lambda x: f"{x:.1f}" if not pd.isnull(x) else "0.000")
         display_data['Points'] = display_data['Points'].fillna(0).astype(int)
         display_data['Goals'] = display_data['Goals'].fillna(0).astype(int)
         display_data['GP'] = display_data['GP'].fillna(0).astype(int)
-
-        # Display the sorted data in a Streamlit dataframe
-        st.dataframe(display_data)
+              
+        # Display the DataFrame without the index column
+        st.dataframe(display_data, hide_index=True)
 
 
 
@@ -504,14 +508,37 @@ elif selection == '💲Performance Tracking':
         st.plotly_chart(fig, use_container_width=True)
 
 
-                # Display the details of the last 5 bets
-        st.subheader('Last 5 Bets')
+    # Display the details of the last 10 bets
+    st.subheader('Last 10 Bets')
 
-        # Assuming you have a 'Bet Details' column in your DataFrame, adjust this accordingly
-        last_5_bets_columns = ['Date1', 'Team', 'Win', 'Performance']
-        last_5_bets = df_outcomes.tail(5)[last_5_bets_columns]
+    # Assuming you have a 'Bet Details' column in your DataFrame, adjust this accordingly
+    last_10_bets_columns = ['Date1', 'Team', 'Performance', 'Odds Taken']  # Include 'Odds' in the list
+    last_10_bets = df_outcomes.tail(10)[last_10_bets_columns]
 
-        # Convert 'Date1' column to string and extract only the date part
-        last_5_bets['Date1'] = df_outcomes['Date1'].astype(str).str.split().str[0]
+    # Convert 'Date1' column to string and extract only the date part
+    last_10_bets['Date'] = df_outcomes['Date1'].astype(str).str.split().str[0]
 
-        st.dataframe(last_5_bets.rename(columns={'Team': 'Bet'}))
+    # Rename columns
+    last_10_bets.rename(columns={'Team': 'Bet', 'Performance': 'G/L', 'Odds Taken': 'Odds'}, inplace=True)
+
+    # Convert 'G/L' column to numeric
+    last_10_bets['G/L'] = pd.to_numeric(last_10_bets['G/L'], errors='coerce').round(1)
+
+    # Drop the original 'Date1' column
+    last_10_bets.drop(columns=['Date1'], inplace=True)
+
+    # Highlight entire row based on conditions in any column
+    def highlight_row(row):
+        try:
+            numeric_val = float(row['G/L'])
+            color = 'background-color: green' if numeric_val > 0 else 'background-color: red' if numeric_val < 0 else ''
+            return f'<tr style="{color}"><td>{row["Date"]}</td><td>{row["Bet"]}</td><td>{row["G/L"]}</td><td>{row["Odds"]}</td></tr>'
+        except (ValueError, TypeError):
+            return ''
+
+    # Apply styling to the DataFrame
+    styled_last_10_bets = ''.join(last_10_bets.apply(highlight_row, axis=1))
+
+    # Display the HTML table with styling and headers using st.markdown
+    table_html = f'<table><thead><tr><th>Date</th><th>Bet</th><th>G/L</th><th>Odds</th></tr></thead>{styled_last_10_bets}</table>'
+    st.markdown(table_html, unsafe_allow_html=True)
