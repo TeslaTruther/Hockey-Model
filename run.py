@@ -56,13 +56,13 @@ time_zone = pytz.timezone('America/Los_Angeles')
 
 
 # Sidebar with a smaller width
-selection = st.sidebar.radio('Hockey Locks 🔒', ['🏠 Home', '🏒 NHL Model', '🥅 NHL Power Rankings', '🏀 NBA Model', '💲Performance Tracking'])
+selection = st.sidebar.radio('Quantum Odds 📈', ['🏠 Home', '🏒 NHL Model', '🥅 NHL Power Rankings', '🏀 NBA Model', '💲Performance Tracking'])
 
 if selection == '🏠 Home':
     # Main content
-    st.title("Welcome to Hockey Locks :lock:")
-    st.write("This app uses linear regression to generate odds using a combination of real time player and team data.")
-    st.write("Use this tool to find inefficient odds and make positive EV bets.")   
+    st.title("Quantum Odds 📈")
+    st.write("We generate odds to compete against sportsbooks.")
+    st.write("Find inefficient markets and make positive EV bets.")   
      
     st.image(resized_pandas[0])      
 elif selection == '🏒 NHL Model':
@@ -504,3 +504,14 @@ elif selection == '💲Performance Tracking':
         st.plotly_chart(fig, use_container_width=True)
 
 
+                # Display the details of the last 5 bets
+        st.subheader('Last 5 Bets')
+
+        # Assuming you have a 'Bet Details' column in your DataFrame, adjust this accordingly
+        last_5_bets_columns = ['Date1', 'Team', 'Win', 'Performance']
+        last_5_bets = df_outcomes.tail(5)[last_5_bets_columns]
+
+        # Convert 'Date1' column to string and extract only the date part
+        last_5_bets['Date1'] = df_outcomes['Date1'].astype(str).str.split().str[0]
+
+        st.dataframe(last_5_bets.rename(columns={'Team': 'Bet'}))
