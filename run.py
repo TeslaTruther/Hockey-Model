@@ -47,11 +47,11 @@ time_zone = pytz.timezone('America/Los_Angeles')
 
 
 # Sidebar with a smaller width
-selection = st.sidebar.radio('Quantum Odds 📈', ['🏠 Home', '🏒 NHL Model', '🥅 NHL Power Rankings', '🏀 NBA Model', '💲Performance Tracking'])
+selection = st.sidebar.radio('Quantum Odds 	✅', ['🏠 Home', '🏒 NHL Model', '🥅 NHL Power Rankings', '🏀 NBA Model', '💲Performance Tracking'])
 
 if selection == '🏠 Home':
     # Main content
-    st.title("Quantum Odds 📈")
+    st.title("Quantum Odds 	✅")
     st.write("We generate odds to compete against sportsbooks.")
     st.write("Find inefficient markets and make positive EV bets.")   
      
@@ -360,12 +360,11 @@ elif selection == '🏀 NBA Model':
         
             if selected_method == 'Decimal':
                 # Calculate the projected Money Line odds
-                    today_games['Projected_Line'] =today_games['ml1'] 
-
-                
+                    today_games['Projected_Line'] = 0.5 * today_games['ml1'] + 0.5 * today_games['ml2'] 
+                              
 
                     # Set the standard deviation
-                    std_deviation_ml = 14.2
+                    std_deviation_ml = 12.5
 
                     # Calculate implied prob for ML
                     today_games['ML_Home_Prob'] = today_games.apply(
@@ -400,12 +399,12 @@ elif selection == '🏀 NBA Model':
                 
 
                 # Calculate the projected Money Line odds
-                tomorrow_games['Projected_Line'] =tomorrow_games['ml1'] 
+                tomorrow_games['Projected_Line'] = 0.5 * tomorrow_games['ml1'] + 0.5 * tomorrow_games['ml2']  
 
             
 
                 # Set the standard deviation
-                std_deviation_ml = 14.2
+                std_deviation_ml = 12.5
 
                 # Calculate implied prob for ML
                 tomorrow_games['ML_Home_Prob'] = tomorrow_games.apply(
@@ -520,6 +519,9 @@ elif selection == '💲Performance Tracking':
     # Drop the original 'Date1' column
     last_10_bets.drop(columns=['Date1'], inplace=True)
 
+    # Reverse the order of rows
+    last_10_bets = last_10_bets.iloc[::-1]
+
     # Highlight entire row based on conditions in any column
     def highlight_row(row):
         try:
@@ -535,3 +537,5 @@ elif selection == '💲Performance Tracking':
     # Display the HTML table with styling and headers using st.markdown
     table_html = f'<table><thead><tr><th>Date</th><th>Bet</th><th>G/L</th><th>Odds</th></tr></thead>{styled_last_10_bets}</table>'
     st.markdown(table_html, unsafe_allow_html=True)
+
+
