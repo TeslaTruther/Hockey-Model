@@ -1,0 +1,8 @@
+# Custom theme configurations
+custom_theme = """
+[theme]
+primaryColor="#e62828"
+backgroundColor="#2f2f2f"
+secondaryBackgroundColor="#122687"
+textColor="#f9f8f8"
+"""

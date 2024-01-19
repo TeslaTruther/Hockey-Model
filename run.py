@@ -11,14 +11,7 @@ import plotly.express as px
 st.set_page_config(page_title="Quantum Odds", page_icon="🔒", layout="wide")
 
 
-# Custom theme configurations
-custom_theme = """
-    [theme]
-    primaryColor="#e62828"
-    backgroundColor="#2f2f2f"
-    secondaryBackgroundColor="#122687"
-    textColor="#f9f8f8"
-"""
+
 
 class LazyImage:
     def __init__(self, path):
@@ -101,16 +94,16 @@ elif selection == '🏒 NHL Model':
        ## selected_method = st.selectbox('Select Odds:', calculation_methods)
 
         # Apply custom CSS to make the select box smaller
-        st.markdown(
-            """
-            <style>
-            div[data-baseweb="select"] {
-                max-width: 250px; /* Adjust the width as needed */
-            }
-            </style>
-            """,
-            unsafe_allow_html=True
-        )
+        #st.markdown(
+           # """
+            #<style>
+            #div[data-baseweb="select"] {
+             #   max-width: 250px; /* Adjust the width as needed */
+            #}
+            #</style>
+            #""",
+            #unsafe_allow_html=True
+        #)
     
     # Button to get today's odds
         if st.button("Generate Today's Odds", key="get_today_odds"):
