@@ -10,6 +10,14 @@ import plotly.express as px
 
 st.set_page_config(page_title="Quantum Odds", page_icon="🔒", layout="wide")
 
+hide_st_style = """
+            <style>
+            #MainMenu {visibility: hidden;}
+            footer {visibility: hidden;}
+            header {visibility: hidden;}
+            </style>
+            """
+st.markdown(hide_st_style, unsafe_allow_html=True)
 
 class LazyImage:
     def __init__(self, path):
@@ -45,7 +53,7 @@ time_zone = pytz.timezone('America/Los_Angeles')
 
 
 # Sidebar with a smaller width
-selection = st.sidebar.radio('Quantum Odds 	✅', ['🏠 Home', '🏒 NHL Model', '🥅 NHL Power Rankings', '🏀 NBA Model', '🔑 Betting Strategy', '💲Performance Tracking'])
+selection = st.sidebar.radio('Quantum Odds 	✅', ['🏠 Home', '🏒 NHL Model', '🥅 NHL Power Rankings', '🚫 NHL Injuries', '🏀 NBA Model', '🔑 Betting Strategy', '💲Performance Tracking'])
 
 if selection == '🏠 Home':
     # Main content
@@ -240,6 +248,7 @@ elif selection == '🥅 NHL Power Rankings':
     excel_file2 = 'nhlgar.xlsx'
     sheet_name = 'Power Rankings'
     sheet_name2 = "Playerrankings"
+    
 
     # Load data from the specified sheet in the first Excel file
     game_data = pd.read_excel(excel_file, sheet_name=sheet_name)
@@ -310,8 +319,23 @@ elif selection == '🥅 NHL Power Rankings':
         st.dataframe(display_data, hide_index=True)
 
 
+elif selection == '🚫 NHL Injuries':
+    excel_file = 'nhlgar.xlsx'
+    sheet_name = 'Notable Injuries'
+    # Load data from the specified sheet in the first Excel file
+    game_data = pd.read_excel(excel_file, sheet_name=sheet_name)
 
-    
+    # Sort the data based on the 'powerranking' column (assuming it's in column 'powerranking')
+    sorted_data = game_data.sort_values(by='Rank')
+    st.subheader("Important Injuries")
+    st.write('All injuries are included in model and power rankings.')
+
+         
+       # Select columns to display
+    columns_to_display = ['Rank', 'Player', 'Team', 'Injury']
+
+    # Display the DataFrame without the index column
+    st.table(sorted_data[columns_to_display].set_index('Rank'))
                     
 elif selection == '🏀 NBA Model':
 
