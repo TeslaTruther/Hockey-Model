@@ -53,7 +53,7 @@ time_zone = pytz.timezone('America/Los_Angeles')
 
 
 # Sidebar with a smaller width
-selection = st.sidebar.radio('Quantum Odds 	✅', ['🏠 Home', '🏒 NHL Model', '🥅 NHL Power Rankings', '🚫 NHL Injuries', '🏀 NBA Model', '🔑 Betting Strategy', '💲Performance Tracking'])
+selection = st.sidebar.radio('Quantum Odds 	✅', ['🏠 Home', '🏒 NHL Model', '📊 NHL Power Rankings', '🚫 NHL Injuries', '🏀 NBA Model','📊 NBA Power Rankings', '🚫 NBA Injuries','🔑 Betting Strategy', '💲Performance Tracking'])
 
 if selection == '🏠 Home':
     # Main content
@@ -242,7 +242,7 @@ elif selection == '🏒 NHL Model':
                         f"**Over Under Odds:** Over: {game.Totals_Probability['Over']:.2f}, Under: {game.Totals_Probability['Under']:.2f}")
             ##elif selected_method == 'American':
                 ##st.subheader('Coming soon - Decimal only')
-elif selection == '🥅 NHL Power Rankings':
+elif selection == '📊 NHL Power Rankings':
     # Assuming 'Power Rankings' sheet contains the data
     excel_file = 'nhl.xlsx'
     excel_file2 = 'nhlgar.xlsx'
@@ -345,7 +345,7 @@ elif selection == '🏀 NBA Model':
     excel_file = 'nba.xlsx'
 
     # Load data from "Game Data" sheet
-    game_data = pd.read_excel(excel_file, sheet_name="2023schedule")
+    game_data = pd.read_excel(excel_file, sheet_name="2024schedule")
 
     # Convert 'Date' column to datetime format and adjust for Pacific Time
     game_data['Date'] = pd.to_datetime(game_data['Date']).dt.tz_localize(time_zone)
@@ -367,7 +367,7 @@ elif selection == '🏀 NBA Model':
     if st.button("Generate Todays's Odds", key="get_todays_odds"):
         
                     # Calculate the projected Money Line odds
-                    today_games['Projected_Line'] = 0.4 * today_games['ml1'] + 0.2 * today_games['ml2'] + 0.4 * today_games['ml3']
+                    today_games['Projected_Line'] = 0.25 * today_games['ml1'] + 0.25 * today_games['ml2'] + 0.5 * today_games['ml3']
 
                     today_games['Projected_Score'] = (today_games['homtot'] + today_games['vistot'])    
 
@@ -428,7 +428,7 @@ elif selection == '🏀 NBA Model':
         # Calculate and display the over/under odds, implied probabilities, and projected scores based on the selected method
             
                 # Calculate the projected Money Line odds
-            tomorrow_games['Projected_Line'] = 0.4 * tomorrow_games['ml1'] + 0.2 * tomorrow_games['ml2'] + 0.4 * tomorrow_games['ml3'] 
+            tomorrow_games['Projected_Line'] = 0.25 * tomorrow_games['ml1'] + 0.25 * tomorrow_games['ml2'] + 0.5 * tomorrow_games['ml3'] 
 
             tomorrow_games['Projected_Score'] = (tomorrow_games['homtot'] + tomorrow_games['vistot'])  
 
@@ -487,13 +487,57 @@ elif selection == '🏀 NBA Model':
                     st.write(
                         f"**Over Under Odds:** Over: {game.Totals_Probability['Over']:.2f}, Under: {game.Totals_Probability['Under']:.2f}")
 
+elif selection == '📊 NBA Power Rankings':
+    excel_file = 'nba.xlsx'
+    sheet_name = 'Powerrankings'
+      
+
+    # Load data from the specified sheet in the first Excel file
+    game_data = pd.read_excel(excel_file, sheet_name=sheet_name)
+
+    # Sort the data based on the 'powerranking' column (assuming it's in column 'powerranking')
+    sorted_data = game_data.sort_values(by='Power')
+    
+        
+    # Create a two-column layout
+    col1, col2 = st.columns(2)  
+
+  
+        # Display content in the left column
+    with col1:
+        st.subheader("Team Rankings")
+
+       # Rename the columns for display
+        display_data = sorted_data[['Power', 'Team','Off Rank','Def Rank']].rename(columns={'Power': 'Power Ranking'})
+
+        # Display the DataFrame without the index column
+        st.dataframe(display_data, hide_index=True)
+
+elif selection == '🚫 NBA Injuries':
+    excel_file = 'nba.xlsx'
+    sheet_name = 'notable injuries'
+    # Load data from the specified sheet in the first Excel file
+    game_data = pd.read_excel(excel_file, sheet_name=sheet_name)
+
+    # Sort the data based on the 'powerranking' column (assuming it's in column 'powerranking')
+    sorted_data = game_data.sort_values(by='Rank')
+    st.subheader("Important Injuries")
+    st.write('All injuries are included in model and power rankings.')
+
+         
+       # Select columns to display
+    columns_to_display = ['Rank', 'Player', 'Team', 'Injury']
+
+    # Display the DataFrame without the index column
+    st.table(sorted_data[columns_to_display].set_index('Rank'))
+
 elif selection == '🔑 Betting Strategy':
-     st.title('Strategy Talk 🔑')
-     st.write('Our goal at Quantum Odds is to make our clients money. To make money gambling, you need relentless discipline and a strategy with an edge. The sports betting market is generally efficient and set up for you to lose (like all gambling). Lines are priced to the sportsbook’s implied probabilities, making every bet to have an expected return of zero. After rake every bet has negative expected value, explaining why most people lose. However, bettors have one strategic advantage over sportsbooks: flexibility. Sportsbooks need to post lines every day for every game in every sport and will eventually post a non-competitive line. Profitable bettors shop the market for these mistakes. Below is a step-by-step guide for how Quantum Odds will help you generate an edge.')            
+     st.title('Strategy 🔑')
+     st.write('Our goal at Quantum Odds is to make our clients money. To make money gambling, you need relentless discipline and a strategy with an edge. The sports betting market is generally efficient and set up for you to lose (like all gambling). Lines are priced to the sportsbook’s implied probabilities, making every bet have an expected return of zero. After rake, every bet has negative expected return, explaining why most people lose. However, bettors have one strategic advantage over sportsbooks: flexibility. Sportsbooks need to post lines every day for every game in every sport and will eventually post a non-competitive line. Profitable bettors shop the market for these mistakes. Below is a step-by-step guide for how Quantum Odds will help you generate an edge.')            
      st.subheader('Data Models')
-     st.write('The first step to our strategy is to generate odds before they are released. Using statistics and machine learning, we crunch real time player and team data to produce our lines. Our data models produce lines the same way Sportsbooks do. Having lines ready before the Sportsbook is crucial to allowing you to find inefficiencies quickly.')
+     st.write('The first step to our strategy is to generate odds before they are released. Using statistics and machine learning, we crunch real time player and team data to produce our lines. Our data models produce lines the same way sportsbooks do. Having lines ready before the sportsbook is crucial to allowing you to find inefficiencies quickly.')
      st.subheader('Speed and Sportsbook Selection')   
-     st.write('Making positive EV bets is 50% data and 50% speed. The best time to find a great bet is right after a sportsbook drops their lines. After release lines will shift rapidly as sharks place large bets on inefficiencies. Sportsbooks know these bets are sharp and will adjust their lines appropriately making them stronger. Compare Sportsbooks and find which ones consistently release odds first. Track when lines are released and place your bets within an hour of them being released. When the odds are dropped compare them to Quantum Odd’s models and find the inefficiencies.')
+     st.write('Making positive EV bets is 75% data and 25% speed. The best time to find a great bet is right after a sportsbook drops their lines. After release, lines will shift rapidly as sharks place large bets on inefficiencies. Sportsbooks know these bets are sharp and will adjust their lines appropriately making them stronger. Compare Sportsbooks and find which ones consistently release odds first. Track when lines are released and place your bets within an hour of them being released. When the odds are dropped compare them to Quantum Odd’s models and find the inefficiencies.')
      st.subheader('Line Shopping')
      st.write('The last step of maximizing your EV is to line shop your bets. Place all your bets on the book that releases lines first, then watch other books release their odds. Generally, the closer to gametime the sharper the odds but sometimes you can cash out on your original bet to get better odds at another book. Do note, it rarely works to line shop if you pay a cash out penalty and this should be considered when picking your main book.')
      st.write('Line shopping also allows you to back-test your bets. If lines consistently move in your favor, you must be making high value bets. ') 
