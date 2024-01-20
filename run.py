@@ -11,8 +11,6 @@ import plotly.express as px
 st.set_page_config(page_title="Quantum Odds", page_icon="🔒", layout="wide")
 
 
-
-
 class LazyImage:
     def __init__(self, path):
         self.path = path
@@ -47,12 +45,12 @@ time_zone = pytz.timezone('America/Los_Angeles')
 
 
 # Sidebar with a smaller width
-selection = st.sidebar.radio('Quantum Odds 	✅', ['🏠 Home', '🏒 NHL Model', '🥅 NHL Power Rankings', '🏀 NBA Model', '💲Performance Tracking'])
+selection = st.sidebar.radio('Quantum Odds 	✅', ['🏠 Home', '🏒 NHL Model', '🥅 NHL Power Rankings', '🏀 NBA Model', '🔑 Betting Strategy', '💲Performance Tracking'])
 
 if selection == '🏠 Home':
     # Main content
     st.title("Quantum Odds 	✅")
-    st.write("We generate odds to compete against sportsbooks.")
+    st.write("We generate odds so you can compete against sportsbooks.")
     st.write("Find inefficient markets and make positive EV bets.")   
      
     st.image(resized_pandas[0])    
@@ -82,7 +80,7 @@ elif selection == '🏒 NHL Model':
         tomorrow_start = tomorrow.replace(hour=0, minute=0, second=0, microsecond=0)
         tomorrow_end = tomorrow_start + pd.DateOffset(1)
         tomorrow_games = game_data[(game_data['Date'] >= tomorrow_start) & (game_data['Date'] < tomorrow_end)]
-
+        st.title('NHL Model 🏒 ')
         st.header("How the Model Works")
         st.write("The model generates odds from its projected probability of outcomes. Think of these odds as the minimum return you would require to make a positive EV bet.")
         st.subheader("Run The Model:")
@@ -317,7 +315,7 @@ elif selection == '🥅 NHL Power Rankings':
                     
 elif selection == '🏀 NBA Model':
 
-    st.title('Work In Progress - Odds are not sharp')
+    st.title('NBA Model 🏀')
                                    
         # Use a relative path to the Excel file
     excel_file = 'nba.xlsx'
@@ -340,30 +338,19 @@ elif selection == '🏀 NBA Model':
     tomorrow_end = tomorrow_start + pd.DateOffset(1)
     tomorrow_games = game_data[(game_data['Date'] >= tomorrow_start) & (game_data['Date'] < tomorrow_end)]
     # Define a list of available methods for calculating odds
-    calculation_methods = ['Decimal', 'American']
+    
 
-    # Add a selectbox to choose the calculation method
-    selected_method = st.selectbox('Select Odds:', calculation_methods)
-
-    # Apply custom CSS to make the select box smaller
-    st.markdown(
-        """
-        <style>
-        div[data-baseweb="select"] {
-            max-width: 250px; /* Adjust the width as needed */
-        }
-        </style>
-        """,
-        unsafe_allow_html=True
-    )
     if st.button("Generate Todays's Odds", key="get_todays_odds"):
         
-            if selected_method == 'Decimal':
-                # Calculate the projected Money Line odds
-                    today_games['Projected_Line'] = 0.5 * today_games['ml1'] + 0.5 * today_games['ml2'] 
-                              
+                    # Calculate the projected Money Line odds
+                    today_games['Projected_Line'] = 0.4 * today_games['ml1'] + 0.2 * today_games['ml2'] + 0.4 * today_games['ml3']
+
+                    today_games['Projected_Score'] = (today_games['homtot'] + today_games['vistot'])    
+
+                    today_games['Constant'] = np.round(today_games['Projected_Score'] / 0.5) * 0.5
 
                     # Set the standard deviation
+                    std_deviation_overunder = 11.1
                     std_deviation_ml = 12.5
 
                     # Calculate implied prob for ML
@@ -381,58 +368,115 @@ elif selection == '🏀 NBA Model':
                     today_games['ML_Home_Decimal_Odds'] = 1 / today_games['ML_Home_Prob']
                     today_games['ML_Away_Decimal_Odds'] = 1 / today_games['ML_Away_Prob']
 
-                    
+                    # Calculate the odds for over/under using the normal distribution
+                    today_games['Over_Under_Odds'] = today_games.apply(
+                        lambda row: {
+                            'Over': 1 - stats.norm.cdf((row.Constant - row.Projected_Score) / std_deviation_overunder),
+                            'Under': stats.norm.cdf((row.Constant - row.Projected_Score) / std_deviation_overunder)
+                        },
+                        axis=1
+                    )
+
+                    # Calculate the implied probability percentages for Over/Under
+                    today_games['Totals_Probability'] = today_games['Over_Under_Odds'].apply(
+                        lambda odds: {'Over': 1 / odds['Over'], 'Under': 1 / odds['Under']}
+                    )
+
+                    # Calculate decimal odds for Over/Under
+                    today_games['Totals_Decimal_Odds'] = today_games['Totals_Probability'].apply(
+                        lambda odds: {'Over': odds['Over'] - 1, 'Under': odds['Under'] - 1}
+                    )
+
                     # Display the odds for today's games in a Streamlit table
                     st.write("### Today's Games and Projected Odds:")
                     for i, game in enumerate(today_games.itertuples(), start=1):                   
                         st.subheader(f"{game.Visitor} *@* {game.Home}")
                         st.write(f"{game.Home} | **Projected Odds:** {game.ML_Home_Decimal_Odds:.3f}")
                         st.write(f"{game.Visitor} | **Projected Odds:** {game.ML_Away_Decimal_Odds:.3f}")
+
+                        st.write(f"Projected Over Under Line: {game.Constant:.1f}")            
+                        st.write(f"**Over Under Odds:** Over: {game.Totals_Probability['Over']:.2f}, Under: {game.Totals_Probability['Under']:.2f}")
+
             
-            elif selected_method == 'American':
-                st.subheader('Coming soon - Decimal only')  
+              
 # Button to get today's odds
     if st.button("Generate Tomorrow's Odds", key="get_tomorrow_odds"):
         # Calculate and display the over/under odds, implied probabilities, and projected scores based on the selected method
-            if selected_method == 'Decimal':
-                # Calculate and display the over/under odds, implied probabilities, and projected scores
-                
-
+            
                 # Calculate the projected Money Line odds
-                tomorrow_games['Projected_Line'] = 0.5 * tomorrow_games['ml1'] + 0.5 * tomorrow_games['ml2']  
+            tomorrow_games['Projected_Line'] = 0.4 * tomorrow_games['ml1'] + 0.2 * tomorrow_games['ml2'] + 0.4 * tomorrow_games['ml3'] 
+
+            tomorrow_games['Projected_Score'] = (tomorrow_games['homtot'] + tomorrow_games['vistot'])  
 
             
 
+                 # Round the constant to the nearest 0.5 using round_half_even
+            tomorrow_games['Constant'] = np.round(tomorrow_games['Projected_Score'] / 0.5) * 0.5
+
                 # Set the standard deviation
-                std_deviation_ml = 12.5
+            std_deviation_overunder = 11.1
+            std_deviation_ml = 12.5
 
                 # Calculate implied prob for ML
-                tomorrow_games['ML_Home_Prob'] = tomorrow_games.apply(
+            tomorrow_games['ML_Home_Prob'] = tomorrow_games.apply(
                     lambda row: stats.norm.cdf((row.Projected_Line) / std_deviation_ml),
                     axis=1
                 )
 
-                tomorrow_games['ML_Away_Prob'] = tomorrow_games.apply(
+            tomorrow_games['ML_Away_Prob'] = tomorrow_games.apply(
                     lambda row: stats.norm.cdf(- (row.Projected_Line) / std_deviation_ml),
                     axis=1
                 )
 
                 # Convert implied probabilities to decimal odds for ML
-                tomorrow_games['ML_Home_Decimal_Odds'] = 1 / tomorrow_games['ML_Home_Prob']
-                tomorrow_games['ML_Away_Decimal_Odds'] = 1 / tomorrow_games['ML_Away_Prob']
+            tomorrow_games['ML_Home_Decimal_Odds'] = 1 / tomorrow_games['ML_Home_Prob']
+            tomorrow_games['ML_Away_Decimal_Odds'] = 1 / tomorrow_games['ML_Away_Prob']
 
-                
-                # Display the odds for today's games in a Streamlit table
-                st.write("### Today's Games and Projected Odds:")
-                for i, game in enumerate(tomorrow_games.itertuples(), start=1):                   
+                # Calculate the odds for over/under using the normal distribution
+            tomorrow_games['Over_Under_Odds'] = tomorrow_games.apply(
+                    lambda row: {
+                        'Over': 1 - stats.norm.cdf((row.Constant - row.Projected_Score) / std_deviation_overunder),
+                        'Under': stats.norm.cdf((row.Constant - row.Projected_Score) / std_deviation_overunder)
+                    },
+                    axis=1
+                )
+
+                # Calculate the implied probability percentages for Over/Under
+            tomorrow_games['Totals_Probability'] = tomorrow_games['Over_Under_Odds'].apply(
+                    lambda odds: {'Over': 1 / odds['Over'], 'Under': 1 / odds['Under']}
+                )
+
+                # Calculate decimal odds for Over/Under
+            tomorrow_games['Totals_Decimal_Odds'] = tomorrow_games['Totals_Probability'].apply(
+                    lambda odds: {'Over': odds['Over'] - 1, 'Under': odds['Under'] - 1}
+                )
+
+                # Display the odds for tomorrow's games in a Streamlit table
+            st.write("### Tomorrow's Games and Projected Odds:")
+
+            for i, game in enumerate(tomorrow_games.itertuples(), start=1):
                     st.subheader(f"{game.Visitor} *@* {game.Home}")
                     st.write(f"{game.Home} | **Projected Odds:** {game.ML_Home_Decimal_Odds:.3f}")
                     st.write(f"{game.Visitor} | **Projected Odds:** {game.ML_Away_Decimal_Odds:.3f}")
-                
 
-            elif selected_method == 'American':
-                st.subheader('Coming Soon - Decimal Only')  
-    
+                    st.write(f"Projected Over Under Line: {game.Constant:.1f}")
+                    st.write(
+                        f"**Over Under Odds:** Over: {game.Totals_Probability['Over']:.2f}, Under: {game.Totals_Probability['Under']:.2f}")
+
+elif selection == '🔑 Betting Strategy':
+     st.title('Strategy Talk 🔑')
+     st.write('Our goal at Quantum Odds is to make our clients money. To make money gambling, you need relentless discipline and a strategy with an edge. The sports betting market is generally efficient and set up for you to lose (like all gambling). Lines are priced to the sportsbook’s implied probabilities, making every bet to have an expected return of zero. After rake every bet has negative expected value, explaining why most people lose. However, bettors have one strategic advantage over sportsbooks: flexibility. Sportsbooks need to post lines every day for every game in every sport and will eventually post a non-competitive line. Profitable bettors shop the market for these mistakes. Below is a step-by-step guide for how Quantum Odds will help you generate an edge.')            
+     st.subheader('Data Models')
+     st.write('The first step to our strategy is to generate odds before they are released. Using statistics and machine learning, we crunch real time player and team data to produce our lines. Our data models produce lines the same way Sportsbooks do. Having lines ready before the Sportsbook is crucial to allowing you to find inefficiencies quickly.')
+     st.subheader('Speed and Sportsbook Selection')   
+     st.write('Making positive EV bets is 50% data and 50% speed. The best time to find a great bet is right after a sportsbook drops their lines. After release lines will shift rapidly as sharks place large bets on inefficiencies. Sportsbooks know these bets are sharp and will adjust their lines appropriately making them stronger. Compare Sportsbooks and find which ones consistently release odds first. Track when lines are released and place your bets within an hour of them being released. When the odds are dropped compare them to Quantum Odd’s models and find the inefficiencies.')
+     st.subheader('Line Shopping')
+     st.write('The last step of maximizing your EV is to line shop your bets. Place all your bets on the book that releases lines first, then watch other books release their odds. Generally, the closer to gametime the sharper the odds but sometimes you can cash out on your original bet to get better odds at another book. Do note, it rarely works to line shop if you pay a cash out penalty and this should be considered when picking your main book.')
+     st.write('Line shopping also allows you to back-test your bets. If lines consistently move in your favor, you must be making high value bets. ') 
+     st.subheader('Discipline') 
+     st.write('1. Unit size 2-5% of bank roll per bet')
+     st.write('2. Don’t bet for the sake of betting - no inefficiencies no bet')
+     st.write('3. Understand variance and how it impacts your returns')
 
 elif selection == '💲Performance Tracking':
     # Define functions
