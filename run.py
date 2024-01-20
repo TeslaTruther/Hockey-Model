@@ -508,7 +508,7 @@ elif selection == '📊 NBA Power Rankings':
         st.subheader("Team Rankings")
 
        # Rename the columns for display
-        display_data = sorted_data[['Power', 'Team','Off Rank','Def Rank']].rename(columns={'Power': 'Power Ranking'})
+        display_data = sorted_data[['Power', 'Team','Off Rank','Def Rank']].rename(columns={'Power': 'Ranking'})
 
         # Display the DataFrame without the index column
         st.dataframe(display_data, hide_index=True)
