@@ -59,7 +59,7 @@ if selection == '🏠 Home':
     # Main content
     st.title("Quantum Odds 	✅")
     st.write("We generate odds so you can compete against sportsbooks.")
-    st.write("Find inefficient markets and make positive EV bets.")   
+    st.write("Find inefficient markets and make positive expected value bets.")   
      
     st.image(resized_pandas[0])    
     # Add a URL at the bottom
@@ -268,6 +268,7 @@ elif selection == '📊 NHL Power Rankings':
   
         # Display content in the left column
     with col1:
+                
         st.subheader("Team Rankings")
 
        # Rename the columns for display
@@ -276,20 +277,6 @@ elif selection == '📊 NHL Power Rankings':
         # Display the DataFrame without the index column
         st.dataframe(display_data, hide_index=True)
 
-        st.subheader("Model's Top Goalies")
-
-        display_data = sorted_data2[['Rank', 'topgoalie', 'golteam', 'gs', 'sv%', 'qs']].rename(columns={'topgoalie': 'Goalie', 'golteam': 'Team', 'gs': 'GS', 'sv%': 'SV%', 'qs': 'Quality Starts'})
-
-        # Handle non-finite values before converting to integers
-        display_data['GS'] = display_data['GS'].fillna(0).astype(int)
-        display_data['Quality Starts'] = display_data['Quality Starts'].fillna(0).astype(int)
-        
-        # Display the DataFrame without the index column
-        st.dataframe(display_data.head(10), hide_index=True)
-
-        
-    # Add your code for the right column here
-    with col2:
         st.subheader("Model's Top Players")
 
         # Rename the columns for display and round 'mpg' to one decimal place
@@ -302,10 +289,24 @@ elif selection == '📊 NHL Power Rankings':
         display_data['Goals'] = display_data['Goals'].fillna(0).astype(int)
         display_data['GP'] = display_data['GP'].fillna(0).astype(int)
 
-             
         # Display the DataFrame without the index column
-        st.dataframe(display_data, hide_index=True)
+        st.dataframe(display_data.head(15), hide_index=True)
+    # Add your code for the right column here
+    with col2:
 
+        st.subheader("Model's Top Goalies")
+
+        display_data = sorted_data2[['Rank', 'topgoalie', 'golteam', 'gs', 'sv%', 'qs']].rename(columns={'topgoalie': 'Goalie', 'golteam': 'Team', 'gs': 'GS', 'sv%': 'SV%', 'qs': 'Quality Starts'})
+
+        # Handle non-finite values before converting to integers
+        display_data['GS'] = display_data['GS'].fillna(0).astype(int)
+        display_data['Quality Starts'] = display_data['Quality Starts'].fillna(0).astype(int)
+        
+        # Display the DataFrame without the index column
+        st.dataframe(display_data.head(10), hide_index=True)
+
+             
+       
         st.subheader("Model's Top Rookies")
         display_data = sorted_data2[['Rank','bestrookies', 'rook team', 'pos1', 'gp1', 'g1','p1','mpg1']].rename(columns={'Rank': 'Rank','bestrookies': 'Rookie', 'rook team': 'Team', 'gp1': 'GP', 'pos1': 'Pos', 'mpg1': 'MPG','g1':'Goals','p1':'Points'})
 
@@ -490,6 +491,7 @@ elif selection == '🏀 NBA Model':
 elif selection == '📊 NBA Power Rankings':
     excel_file = 'nba.xlsx'
     sheet_name = 'Powerrankings'
+    sheet_name2 = "Topplayers"
       
 
     # Load data from the specified sheet in the first Excel file
@@ -497,6 +499,11 @@ elif selection == '📊 NBA Power Rankings':
 
     # Sort the data based on the 'powerranking' column (assuming it's in column 'powerranking')
     sorted_data = game_data.sort_values(by='Power')
+    game_data2 = pd.read_excel(excel_file, sheet_name=sheet_name2)
+
+    # Sort the data based on the 'topplayer' column (assuming it's in column 'topplayer')
+    sorted_data2 = game_data2.sort_values(by='Rank')
+    
     
         
     # Create a two-column layout
@@ -512,6 +519,22 @@ elif selection == '📊 NBA Power Rankings':
 
         # Display the DataFrame without the index column
         st.dataframe(display_data, hide_index=True)
+
+        st.subheader("Model's Top Players")
+
+        display_data = sorted_data2[['Rank', 'topplayer', 'playteam', 'PTS', 'AST', 'REB','STL','BLK']].rename(columns={'topplayer': 'Player', 'playteam': 'Team'})
+
+       
+        # Display the DataFrame without the index column
+        st.dataframe(display_data.head(15), hide_index=True)
+
+             
+    with col2:
+        st.subheader("Models Top Rookies")
+        display_data = sorted_data2[['Rank', 'bestrook', 'rookteam', 'p1', 'a1', 'r1','s1','b1']].rename(columns={'bestrook': 'Player', 'rookteam': 'Team', 'p1': 'PTS', 'a1': 'AST','r1': 'REB', 's1': 'STL', 'b1' : 'BLK'})
+                           
+        # Display the DataFrame without the index column
+        st.dataframe(display_data.head(10), hide_index=True)
 
 elif selection == '🚫 NBA Injuries':
     excel_file = 'nba.xlsx'
