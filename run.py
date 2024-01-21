@@ -375,7 +375,7 @@ elif selection == '🏀 NBA Model':
 
                     # Set the standard deviation
                     std_deviation_overunder = 11.1
-                    std_deviation_ml = 12.5
+                    std_deviation_ml = 11
 
                     # Calculate implied prob for ML
                     today_games['ML_Home_Prob'] = today_games.apply(
@@ -439,7 +439,7 @@ elif selection == '🏀 NBA Model':
 
                 # Set the standard deviation
             std_deviation_overunder = 11.1
-            std_deviation_ml = 12.5
+            std_deviation_ml = 11
 
                 # Calculate implied prob for ML
             tomorrow_games['ML_Home_Prob'] = tomorrow_games.apply(
