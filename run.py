@@ -368,15 +368,15 @@ elif selection == '🏀 NBA Model':
     if st.button("Generate Todays's Odds", key="get_todays_odds"):
         
                     # Calculate the projected Money Line odds
-                    today_games['Projected_Line'] = 0.25 * today_games['ml1'] + 0.25 * today_games['ml2'] + 0.5 * today_games['ml3']
+                    today_games['Projected_Line'] = 0.2 * today_games['ml1'] + 0 * today_games['ml2'] + 0.8 * today_games['ml3']
 
-                    today_games['Projected_Score'] = (today_games['homtot'] + today_games['vistot'])    
+                    today_games['Projected_Score'] = 0.6 * (today_games['homtot'] + today_games['vistot']) + 0.4 * (today_games['homtot1'] + today_games['vistot1'])   
 
                     today_games['Constant'] = np.round(today_games['Projected_Score'] / 0.5) * 0.5
 
                     # Set the standard deviation
                     std_deviation_overunder = 11.1
-                    std_deviation_ml = 11
+                    std_deviation_ml = 12
 
                     # Calculate implied prob for ML
                     today_games['ML_Home_Prob'] = today_games.apply(
@@ -429,9 +429,9 @@ elif selection == '🏀 NBA Model':
         # Calculate and display the over/under odds, implied probabilities, and projected scores based on the selected method
             
                 # Calculate the projected Money Line odds
-            tomorrow_games['Projected_Line'] = 0.25 * tomorrow_games['ml1'] + 0.25 * tomorrow_games['ml2'] + 0.5 * tomorrow_games['ml3'] 
+            tomorrow_games['Projected_Line'] = 0.2 * tomorrow_games['ml1'] + 0 * tomorrow_games['ml2'] + 0.8 * tomorrow_games['ml3'] 
 
-            tomorrow_games['Projected_Score'] = (tomorrow_games['homtot'] + tomorrow_games['vistot'])  
+            tomorrow_games['Projected_Score'] = 0.5 * (tomorrow_games['homtot'] + tomorrow_games['vistot'])  + 0.5 * (tomorrow_games['homtot1'] + tomorrow_games['vistot1'])
 
             
 
@@ -440,7 +440,7 @@ elif selection == '🏀 NBA Model':
 
                 # Set the standard deviation
             std_deviation_overunder = 11.1
-            std_deviation_ml = 11
+            std_deviation_ml = 12
 
                 # Calculate implied prob for ML
             tomorrow_games['ML_Home_Prob'] = tomorrow_games.apply(
