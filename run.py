@@ -424,18 +424,14 @@ elif selection == '🏀 NBA Model':
 
             
               
-# Button to get today's odds
     if st.button("Generate Tomorrow's Odds", key="get_tomorrow_odds"):
-        # Calculate and display the over/under odds, implied probabilities, and projected scores based on the selected method
-            
-                # Calculate the projected Money Line odds
-            tomorrow_games['Projected_Line'] = 0.2 * tomorrow_games['ml1'] + 0 * tomorrow_games['ml2'] + 0.8 * tomorrow_games['ml3'] 
+            # Calculate and display the over/under odds, implied probabilities, and projected scores based on the selected method
+            # Calculate the projected Money Line odds
+            tomorrow_games['Projected_Line'] = 0.2 * tomorrow_games['ml1'] + 0 * tomorrow_games['ml2'] + 0.8 * tomorrow_games['ml3']
 
-            tomorrow_games['Projected_Score'] = 0.5 * (tomorrow_games['homtot'] + tomorrow_games['vistot'])  + 0.5 * (tomorrow_games['homtot1'] + tomorrow_games['vistot1'])
+            tomorrow_games['Projected_Score'] = 0.6 * (tomorrow_games['homtot'] + tomorrow_games['vistot']) + 0.4 * (tomorrow_games['homtot1'] + tomorrow_games['vistot1'])
 
-            
-
-                 # Round the constant to the nearest 0.5 using round_half_even
+            # Round the constant to the nearest 0.5 using round_half_even
             tomorrow_games['Constant'] = np.round(tomorrow_games['Projected_Score'] / 0.5) * 0.5
 
                 # Set the standard deviation
@@ -589,7 +585,7 @@ elif selection == '💲Performance Tracking':
     st.title('Performance Tracking')
 
     
-    file_path = 'EV Performance.xlsx'  
+    file_path = 'Performance.xlsx'  
 
     # Column names
     column_name_balance = 'Balance'  # Replace with the actual name of your balance column
