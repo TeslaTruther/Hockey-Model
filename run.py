@@ -583,7 +583,7 @@ elif selection == '🏀 NBA Model':
             st.write(f"**Over Under Odds:** Over: {game.Totals_Probability['Over']:.2f}, Under: {game.Totals_Probability['Under']:.2f}")
             # Inside the loop where you display each game's details
             if st.button(f"More Info: {game.Home} vs {game.Visitor}", key=f"more_info_tomorrow_{i}"):
-                excel_file = 'nba.xlsx'
+                excel_file = 'nba.xlsm'
                 sheet_name = '2024EPM'
                      # Check if either team played yesterday
                 today = datetime.now(time_zone).replace(hour=0, minute=0, second=0, microsecond=0)
