@@ -84,16 +84,18 @@ elif selection == '🏒 NHL Model':
         # Filter the DataFrame to get today's games
         today_games = game_data[(game_data['Date'] >= today) & (game_data['Date'] < today + pd.DateOffset(1))]
 
-        # Get tomorrow's date dynamically in Pacific Time
         tomorrow = today + timedelta(days=1)
+        tmrday = today + timedelta(days=2) 
         tomorrow_start = tomorrow.replace(hour=0, minute=0, second=0, microsecond=0)
+        tmrday_start = tmrday.replace(hour=0, minute=0, second=0, microsecond=0)
         tomorrow_end = tomorrow_start + pd.DateOffset(1)
+        tmrday_end = tmrday_start + pd.DateOffset(1)
         tomorrow_games = game_data[(game_data['Date'] >= tomorrow_start) & (game_data['Date'] < tomorrow_end)]
+        tmrday_games = game_data[(game_data['Date'] >= tmrday_start) & (game_data['Date'] < tmrday_end)]
+
         st.title('NHL Model 🏒 ')
         st.header("How the Model Works")
         st.write("The model generates odds from its projected probability of outcomes. Think of these odds as the minimum return you would require to make a positive EV bet.")
-        st.subheader("Run The Model:")
-
         # Define a list of available methods for calculating odds
         ##calculation_methods = ['Decimal', 'American']
 
@@ -111,12 +113,9 @@ elif selection == '🏒 NHL Model':
             #""",
             #unsafe_allow_html=True
         #)
-    
-    # Button to get today's odds
-        if st.button("Generate Today's Odds", key="get_today_odds"):
-            # Calculate and display the over/under odds, implied probabilities, and projected scores based on the selected method
-            ##if selected_method == 'Decimal':
-                # Calculate and display the over/under odds, implied probabilities, and projected scores
+        tab1, tab2, tab3, tab4= st.tabs(["Today's Games", "Tomorrow's Games", "Next Day's Games", "Injuries"])
+
+        with tab1:
                 today_games['Projected_Score'] = (today_games['hometotal'] + today_games['vistotal']) 
 
                 # Calculate the projected Money Line odds
@@ -164,7 +163,7 @@ elif selection == '🏒 NHL Model':
                 )
 
                 # Display the odds for today's games in a Streamlit table
-                st.write("### Today's Games and Projected Odds:")
+                st.write("### Today's Projected Odds:")
                 for i, game in enumerate(today_games.itertuples(), start=1):                   
                     st.subheader(f"{game.Visitor} *@* {game.Home}")
                     st.write(f"{game.Home} | **Projected Odds:** {game.ML_Home_Decimal_Odds:.3f}")
@@ -175,13 +174,11 @@ elif selection == '🏒 NHL Model':
 
             ##elif selected_method == 'American':
                 ##st.subheader('Coming Soon - Decimal Only')
-
-
-          
-
-                    
-        if st.button("Generate Tomorrow's Odds", key="get_tomorrows_odds"):
+    
         
+
+        with tab2:                  
+             
             ##if selected_method == 'Decimal':
                 # Calculate and display the over/under odds, implied probabilities, and projected scores
                 tomorrow_games['Projected_Score'] = (tomorrow_games['hometotal'] + tomorrow_games['vistotal']) 
@@ -231,7 +228,7 @@ elif selection == '🏒 NHL Model':
                 )
 
                 # Display the odds for tomorrow's games in a Streamlit table
-                st.write("### Tomorrow's Games and Projected Odds:")
+                st.write("### Tomorrow's Projected Odds:")
 
                 for i, game in enumerate(tomorrow_games.itertuples(), start=1):
                     st.subheader(f"{game.Visitor} *@* {game.Home}")
@@ -241,8 +238,113 @@ elif selection == '🏒 NHL Model':
                     st.write(f"Projected Over Under Line: {game.Constant:.1f}")
                     st.write(
                         f"**Over Under Odds:** Over: {game.Totals_Probability['Over']:.2f}, Under: {game.Totals_Probability['Under']:.2f}")
+           
+        with tab3:                  
+                
+                            ##if selected_method == 'Decimal':
+                                # Calculate and display the over/under odds, implied probabilities, and projected scores
+                tmrday_games['Projected_Score'] = (tmrday_games['hometotal'] + tmrday_games['vistotal']) 
+
+                # Calculate the projected Money Line odds
+                tmrday_games['Projected_Line'] = 0.3 * tmrday_games['ml1'] + 0.45 * tmrday_games['ml2'] + 0.25 * tmrday_games['ml3']
+
+                # Round the constant to the nearest 0.5 using round_half_even
+                tmrday_games['Constant'] = np.round(tmrday_games['Projected_Score'] / 0.5) * 0.5
+
+                # Set the standard deviation
+                std_deviation_overunder = 1.67
+                std_deviation_ml = 2.48
+
+                # Calculate implied prob for ML
+                tmrday_games['ML_Home_Prob'] = tmrday_games.apply(
+                    lambda row: stats.norm.cdf((row.Projected_Line) / std_deviation_ml),
+                    axis=1
+                )
+
+                tmrday_games['ML_Away_Prob'] = tmrday_games.apply(
+                    lambda row: stats.norm.cdf(- (row.Projected_Line) / std_deviation_ml),
+                    axis=1
+                )
+
+                # Convert implied probabilities to decimal odds for ML
+                tmrday_games['ML_Home_Decimal_Odds'] = 1 / tmrday_games['ML_Home_Prob']
+                tmrday_games['ML_Away_Decimal_Odds'] = 1 / tmrday_games['ML_Away_Prob']
+
+                # Calculate the odds for over/under using the normal distribution
+                tmrday_games['Over_Under_Odds'] = tmrday_games.apply(
+                    lambda row: {
+                        'Over': 1 - stats.norm.cdf((row.Constant - row.Projected_Score) / std_deviation_overunder),
+                        'Under': stats.norm.cdf((row.Constant - row.Projected_Score) / std_deviation_overunder)
+                    },
+                    axis=1
+                )
+
+                # Calculate the implied probability percentages for Over/Under
+                tmrday_games['Totals_Probability'] = tmrday_games['Over_Under_Odds'].apply(
+                    lambda odds: {'Over': 1 / odds['Over'], 'Under': 1 / odds['Under']}
+                )
+
+                # Calculate decimal odds for Over/Under
+                tmrday_games['Totals_Decimal_Odds'] = tmrday_games['Totals_Probability'].apply(
+                    lambda odds: {'Over': odds['Over'] - 1, 'Under': odds['Under'] - 1}
+                )
+
+                # Display the odds for tomorrow's games in a Streamlit table
+                st.write("### Day After Tomorrow's Projected Odds:")
+
+                for i, game in enumerate(tmrday_games.itertuples(), start=1):
+                    st.subheader(f"{game.Visitor} *@* {game.Home}")
+                    st.write(f"{game.Home} | **Projected Odds:** {game.ML_Home_Decimal_Odds:.3f}")
+                    st.write(f"{game.Visitor} | **Projected Odds:** {game.ML_Away_Decimal_Odds:.3f}")
+
+                    st.write(f"Projected Over Under Line: {game.Constant:.1f}")
+                    st.write(
+                        f"**Over Under Odds:** Over: {game.Totals_Probability['Over']:.2f}, Under: {game.Totals_Probability['Under']:.2f}")
+                
+                
             ##elif selected_method == 'American':
                 ##st.subheader('Coming soon - Decimal only')
+                    
+        with tab4:
+                excel_file = 'nhlgar.xlsx'
+                sheet_name = 'Injuries'
+                st.title('NHL Injuries 🚫')
+                st.write('All injuries are included in model and power rankings.')
+                # Load data from the specified sheet in the first Excel file
+                injury_data = pd.read_excel(excel_file, sheet_name=sheet_name)
+                teams = [
+                    "Anaheim Ducks", "Arizona Coyotes", "Boston Bruins", "Buffalo Sabres", "Calgary Flames",
+                    "Carolina Hurricanes", "Chicago Blackhawks", "Colorado Avalanche", "Columbus Blue Jackets",
+                    "Dallas Stars", "Detroit Red Wings", "Edmonton Oilers", "Florida Panthers", "Los Angeles Kings",
+                    "Minnesota Wild", "Montreal Canadiens", "Nashville Predators", "New Jersey Devils",
+                    "New York Islanders", "New York Rangers", "Ottawa Senators", "Philadelphia Flyers",
+                    "Pittsburgh Penguins", "San Jose Sharks", "Seattle Kraken", "St. Louis Blues", "Tampa Bay Lightning",
+                    "Toronto Maple Leafs", "Vancouver Canucks", "Vegas Golden Knights", "Washington Capitals", "Winnipeg Jets"
+                ]
+
+
+                # Create a selection box for choosing the team
+                selected_team = st.selectbox('Select Team:', teams)
+
+
+                # Filter the injury data based on the selected team
+                filtered_data = injury_data[injury_data['Team'] == selected_team]
+                filtered_data.rename(columns={'Injury Note': 'Injury'}, inplace=True)
+
+                # Select columns to display
+                columns_to_display = ['Player', 'Injury']
+
+
+                # Convert DataFrame to HTML table without index
+                html_table = filtered_data[columns_to_display].to_html(index=False)
+
+                # Add CSS styling to center the headers
+                html_table = html_table.replace('<thead>', '<thead style="text-align: center;"><style> th { text-align: center; }</style>', 1)
+
+                # Display the HTML table in Streamlit
+                st.write(html_table, unsafe_allow_html=True)
+            
+
 elif selection == '📊 NHL Power Rankings':
     # Assuming 'Power Rankings' sheet contains the data
     excel_file = 'nhl.xlsx'
@@ -362,7 +464,9 @@ elif selection == '🚫 NHL Injuries':
                     
 elif selection == '🏀 NBA Model':
     st.title('NBA Model 🏀')
-                                   
+    st.header("How the Model Works")
+    st.write("The model generates odds from its projected probability of outcomes. Think of these odds as the minimum return you would require to make a positive EV bet.")
+    st.write("If a player is listed on the injury report as day-to-day the model will include them. Non day-to-day injuries will not be included. Click more details to see which players are not be included in the odds. The injury tab shows the complete injury report.")                               
     # Use a relative path to the Excel file
     excel_file = 'nba.xlsm'
 
@@ -399,151 +503,151 @@ elif selection == '🏀 NBA Model':
         return last_matchup_date
 
 
+    tab1, tab2, tab3= st.tabs(["Today's Games", "Tomorrow's Games", "Injuries"])
+
+    with tab1:
+
+        
+            @st.cache_data
+            def skipComputation(today_games):
+                # Calculate the projected Money Line odds
+                today_games['Projected_Line'] = 0.8 * today_games['ml1'] + 0 * today_games['ml2'] + 0.2 * today_games['ml3']
+                today_games['Projected_Score'] = 1 * (today_games['homtot'] + today_games['vistot']) + 0 * (today_games['homtot1'] + today_games['vistot1'])   
+                today_games['Constant'] = np.round(today_games['Projected_Score'] / 0.5) * 0.5
+
+                # Set the standard deviation
+                std_deviation_overunder = 11.1
+                std_deviation_ml = 11
+
+                # Calculate implied prob for ML
+                today_games['ML_Home_Prob'] = today_games.apply(
+                    lambda row: stats.norm.cdf((row.Projected_Line) / std_deviation_ml),
+                    axis=1
+                )
+
+                today_games['ML_Away_Prob'] = today_games.apply(
+                    lambda row: stats.norm.cdf(- (row.Projected_Line) / std_deviation_ml),
+                    axis=1
+                )
+
+                # Convert implied probabilities to decimal odds for ML
+                today_games['ML_Home_Decimal_Odds'] = 1 / today_games['ML_Home_Prob']
+                today_games['ML_Away_Decimal_Odds'] = 1 / today_games['ML_Away_Prob']
+
+                # Calculate the odds for over/under using the normal distribution
+                today_games['Over_Under_Odds'] = today_games.apply(
+                    lambda row: {
+                        'Over': 1 - stats.norm.cdf((row.Constant - row.Projected_Score) / std_deviation_overunder),
+                        'Under': stats.norm.cdf((row.Constant - row.Projected_Score) / std_deviation_overunder)
+                    },
+                    axis=1
+                )
+
+                # Calculate the implied probability percentages for Over/Under
+                today_games['Totals_Probability'] = today_games['Over_Under_Odds'].apply(
+                    lambda odds: {'Over': 1 / odds['Over'], 'Under': 1 / odds['Under']}
+                )
+
+                # Calculate decimal odds for Over/Under
+                today_games['Totals_Decimal_Odds'] = today_games['Totals_Probability'].apply(
+                    lambda odds: {'Over': odds['Over'] - 1, 'Under': odds['Under'] - 1}
+                )
+
+                return today_games
+
+            # Call the function to compute the values
+            today_games = skipComputation(today_games)
+
+            st.write("### Today's Projected Odds:")
+            for i, game in enumerate(today_games.itertuples(), start=1):
+                st.subheader(f"{game.Visitor} *@* {game.Home}")
+                st.write(f"{game.Home} | **Projected Odds:** {game.ML_Home_Decimal_Odds:.3f}")
+                st.write(f"{game.Visitor} | **Projected Odds:** {game.ML_Away_Decimal_Odds:.3f}")
+                st.write(f"Projected Over Under Line: {game.Constant:.1f}")            
+                st.write(f"**Over Under Odds:** Over: {game.Totals_Probability['Over']:.2f}, Under: {game.Totals_Probability['Under']:.2f}")
+            # Dynamically call find_last_matchup_date function for each game
+                last_matchup_date = find_last_matchup_date(game.Visitor, game.Home, game_data, today)
+                st.write(f"Last matchup date between {game.Visitor} and {game.Home}: {last_matchup_date}")
 
 
-    run_top_calculations = st.checkbox("Generate Todays's Odds")
-
-    if run_top_calculations:
-        @st.cache_data
-        def skipComputation(today_games):
-            # Calculate the projected Money Line odds
-            today_games['Projected_Line'] = 0.8 * today_games['ml1'] + 0 * today_games['ml2'] + 0.2 * today_games['ml3']
-            today_games['Projected_Score'] = 1 * (today_games['homtot'] + today_games['vistot']) + 0 * (today_games['homtot1'] + today_games['vistot1'])   
-            today_games['Constant'] = np.round(today_games['Projected_Score'] / 0.5) * 0.5
-
-            # Set the standard deviation
-            std_deviation_overunder = 11.1
-            std_deviation_ml = 11
-
-            # Calculate implied prob for ML
-            today_games['ML_Home_Prob'] = today_games.apply(
-                lambda row: stats.norm.cdf((row.Projected_Line) / std_deviation_ml),
-                axis=1
-            )
-
-            today_games['ML_Away_Prob'] = today_games.apply(
-                lambda row: stats.norm.cdf(- (row.Projected_Line) / std_deviation_ml),
-                axis=1
-            )
-
-            # Convert implied probabilities to decimal odds for ML
-            today_games['ML_Home_Decimal_Odds'] = 1 / today_games['ML_Home_Prob']
-            today_games['ML_Away_Decimal_Odds'] = 1 / today_games['ML_Away_Prob']
-
-            # Calculate the odds for over/under using the normal distribution
-            today_games['Over_Under_Odds'] = today_games.apply(
-                lambda row: {
-                    'Over': 1 - stats.norm.cdf((row.Constant - row.Projected_Score) / std_deviation_overunder),
-                    'Under': stats.norm.cdf((row.Constant - row.Projected_Score) / std_deviation_overunder)
-                },
-                axis=1
-            )
-
-            # Calculate the implied probability percentages for Over/Under
-            today_games['Totals_Probability'] = today_games['Over_Under_Odds'].apply(
-                lambda odds: {'Over': 1 / odds['Over'], 'Under': 1 / odds['Under']}
-            )
-
-            # Calculate decimal odds for Over/Under
-            today_games['Totals_Decimal_Odds'] = today_games['Totals_Probability'].apply(
-                lambda odds: {'Over': odds['Over'] - 1, 'Under': odds['Under'] - 1}
-            )
-
-            return today_games
-
-        # Call the function to compute the values
-        today_games = skipComputation(today_games)
-
-        st.write("### Today's Games and Projected Odds:")
-        for i, game in enumerate(today_games.itertuples(), start=1):
-            st.subheader(f"{game.Visitor} *@* {game.Home}")
-            st.write(f"{game.Home} | **Projected Odds:** {game.ML_Home_Decimal_Odds:.3f}")
-            st.write(f"{game.Visitor} | **Projected Odds:** {game.ML_Away_Decimal_Odds:.3f}")
-            st.write(f"Projected Over Under Line: {game.Constant:.1f}")            
-            st.write(f"**Over Under Odds:** Over: {game.Totals_Probability['Over']:.2f}, Under: {game.Totals_Probability['Under']:.2f}")
-        # Dynamically call find_last_matchup_date function for each game
-            last_matchup_date = find_last_matchup_date(game.Visitor, game.Home, game_data, today)
-            st.write(f"Last matchup date between {game.Visitor} and {game.Home}: {last_matchup_date}")
 
 
+                # Add a button under each matchup
+                if st.button(f"More Info: {game.Home} vs {game.Visitor}"):
+                    excel_file = 'nba.xlsm'
+                    sheet_name = '2024EPM'
+                    sheet_name1 = '2024schedule'
+                    
+                    # Check if either team played yesterday
+                    yesterday = datetime.now(time_zone).replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(days=1)
+                    yesterday_games = game_data[(game_data['Date'] >= yesterday) & (game_data['Date'] < yesterday + pd.DateOffset(1))]
 
+                    home_yesterday = yesterday_games[(yesterday_games['Home'] == game.Home) | (yesterday_games['Visitor'] == game.Home)]
+                    visitor_yesterday = yesterday_games[(yesterday_games['Home'] == game.Visitor) | (yesterday_games['Visitor'] == game.Visitor)]
 
-            # Add a button under each matchup
-            if st.button(f"More Info: {game.Home} vs {game.Visitor}"):
-                excel_file = 'nba.xlsm'
-                sheet_name = '2024EPM'
-                sheet_name1 = '2024schedule'
+                    # Create a two-column layout
+                    col1, col2 = st.columns(2)
+
+                    with col1:
+                        st.subheader(f"{game.Home}:")
+
+                    
+                        # Load the Excel file into a DataFrame
+                        df = pd.read_excel(excel_file, sheet_name=sheet_name)
+
+                        # Filter the DataFrame to get injured players
+                        injured_players = df[df['missing'] > 22]
+
+                        # Filter the DataFrame to get injuries for the specific team
+                        team_injuries = injured_players[injured_players['team1'] == game.Home]
+
+                        # Display notable injuries for the team
+                        notable_injuries = team_injuries['name'].tolist()
+                        if notable_injuries:
+                            injuries_string = ", ".join(notable_injuries)
+                            st.write(f"Injuries:", injuries_string)
+                        else:
+                            st.write("No important injuries")
+                        # Check if the visitor team played yesterday
+                        if not home_yesterday.empty:
+                            st.write(f"{game.Home} played yesterday")
+                        else:
+                            pass
+
+                    with col2:
+                        st.subheader(f"{game.Visitor}:")
+
+                                    
+
+                        # Load the Excel file into a DataFrame
+                        df = pd.read_excel(excel_file, sheet_name=sheet_name)
+
+                        # Filter the DataFrame to get injured players
+                        injured_players = df[df['missing'] > 22]
+
+                        # Filter the DataFrame to get injuries for the specific team
+                        team_injuries = injured_players[injured_players['team1'] == game.Visitor]
+
+                        # Display notable injuries for the team
+                        notable_injuries = team_injuries['name'].tolist()
+                        if notable_injuries:
+                            injuries_string = ", ".join(notable_injuries)
+                            st.write("Injuries:", injuries_string)
+                        else:
+                            st.write("No important injuries")
+                        # Check if the visitor team played yesterday
+                        if not visitor_yesterday.empty:
+                            st.write(f"{game.Visitor} played yesterday")
+                                                    
+                        else:
+                            pass
+
                 
-                # Check if either team played yesterday
-                yesterday = datetime.now(time_zone).replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(days=1)
-                yesterday_games = game_data[(game_data['Date'] >= yesterday) & (game_data['Date'] < yesterday + pd.DateOffset(1))]
-
-                home_yesterday = yesterday_games[(yesterday_games['Home'] == game.Home) | (yesterday_games['Visitor'] == game.Home)]
-                visitor_yesterday = yesterday_games[(yesterday_games['Home'] == game.Visitor) | (yesterday_games['Visitor'] == game.Visitor)]
-
-                # Create a two-column layout
-                col1, col2 = st.columns(2)
-
-                with col1:
-                    st.subheader(f"{game.Home}:")
-
-                   
-                    # Load the Excel file into a DataFrame
-                    df = pd.read_excel(excel_file, sheet_name=sheet_name)
-
-                    # Filter the DataFrame to get injured players
-                    injured_players = df[df['missing'] > 22]
-
-                    # Filter the DataFrame to get injuries for the specific team
-                    team_injuries = injured_players[injured_players['team1'] == game.Home]
-
-                    # Display notable injuries for the team
-                    notable_injuries = team_injuries['name'].tolist()
-                    if notable_injuries:
-                        injuries_string = ", ".join(notable_injuries)
-                        st.write(f"Injuries:", injuries_string)
-                    else:
-                        st.write("No important injuries")
-                     # Check if the visitor team played yesterday
-                    if not home_yesterday.empty:
-                        st.write(f"{game.Home} played yesterday")
-                    else:
-                        pass
-
-                with col2:
-                    st.subheader(f"{game.Visitor}:")
-
-                                   
-
-                    # Load the Excel file into a DataFrame
-                    df = pd.read_excel(excel_file, sheet_name=sheet_name)
-
-                    # Filter the DataFrame to get injured players
-                    injured_players = df[df['missing'] > 22]
-
-                    # Filter the DataFrame to get injuries for the specific team
-                    team_injuries = injured_players[injured_players['team1'] == game.Visitor]
-
-                    # Display notable injuries for the team
-                    notable_injuries = team_injuries['name'].tolist()
-                    if notable_injuries:
-                        injuries_string = ", ".join(notable_injuries)
-                        st.write("Injuries:", injuries_string)
-                    else:
-                        st.write("No important injuries")
-                     # Check if the visitor team played yesterday
-                    if not visitor_yesterday.empty:
-                        st.write(f"{game.Visitor} played yesterday")
-                                                
-                    else:
-                        pass
-
-              
 
 
 
               
-    if st.checkbox("Generate Tomorrow's Odds", key="get_tomorrow_odds"):
+    with tab2:
         # Calculate and display the over/under odds, implied probabilities, and projected scores based on the selected method
         # Calculate the projected Money Line odds
         tomorrow_games['Projected_Line'] = 0.8 * tomorrow_games['ml1'] + 0 * tomorrow_games['ml2'] + 0.2 * tomorrow_games['ml3']
@@ -591,7 +695,7 @@ elif selection == '🏀 NBA Model':
                 lambda odds: {'Over': odds['Over'] - 1, 'Under': odds['Under'] - 1}
                     )
         # Display tomorrow's games and projected odds
-        st.write("### Tomorrow's Games and Projected Odds:")
+        st.write("### Tomorrow's Projected Odds:")
         for i, game in enumerate(tomorrow_games.itertuples(), start=1):
             st.subheader(f"{game.Visitor} *@* {game.Home}")
             st.write(f"{game.Home} | **Projected Odds:** {game.ML_Home_Decimal_Odds:.3f}")
@@ -664,6 +768,44 @@ elif selection == '🏀 NBA Model':
                         st.write(f"Back to back game for {game.Visitor}.")
                     else:
                         pass
+       
+
+    with tab3:
+        excel_file = 'nba.xlsm'
+        sheet_name = 'Injuries'
+        st.title('NBA Injuries 🚫')
+            # Load data from the specified sheet in the first Excel file
+        injury_data = pd.read_excel(excel_file, sheet_name=sheet_name)
+        teams = [
+            "Atlanta Hawks", "Boston Celtics", "Brooklyn Nets", "Charlotte Hornets",
+            "Chicago Bulls", "Cleveland Cavaliers", "Dallas Mavericks", "Denver Nuggets",
+            "Detroit Pistons", "Golden State Warriors", "Houston Rockets", "Indiana Pacers",
+            "Los Angeles Clippers", "Los Angeles Lakers", "Memphis Grizzlies", "Miami Heat",
+            "Milwaukee Bucks", "Minnesota Timberwolves", "New Orleans Pelicans", "New York Knicks",
+            "Oklahoma City Thunder", "Orlando Magic", "Philadelphia 76ers", "Phoenix Suns",
+            "Portland Trail Blazers", "Sacramento Kings", "San Antonio Spurs", "Toronto Raptors",
+            "Utah Jazz", "Washington Wizards"
+        ]
+
+        # Create a selection box for choosing the team
+        selected_team = st.selectbox('Select Team:', teams)
+
+        # Filter the injury data based on the selected team
+        filtered_data = injury_data[injury_data['Team'] == selected_team]
+        filtered_data.rename(columns={'Description': 'Injury'}, inplace=True)
+
+        # Select columns to display
+        columns_to_display = ['Player', 'Injury']
+
+
+        # Convert DataFrame to HTML table without index
+        html_table = filtered_data[columns_to_display].to_html(index=False)
+
+        # Add CSS styling to center the headers
+        html_table = html_table.replace('<thead>', '<thead style="text-align: center;"><style> th { text-align: center; }</style>', 1)
+
+        # Display the HTML table in Streamlit
+        st.write(html_table, unsafe_allow_html=True)
 
 
 
