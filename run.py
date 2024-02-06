@@ -383,6 +383,23 @@ elif selection == '🏀 NBA Model':
     tomorrow_start = tomorrow.replace(hour=0, minute=0, second=0, microsecond=0)
     tomorrow_end = tomorrow_start + pd.DateOffset(1)
     tomorrow_games = game_data[(game_data['Date'] >= tomorrow_start) & (game_data['Date'] < tomorrow_end)]
+    def find_last_matchup_date(team1, team2, data, today):
+        yesterday = today - timedelta(days=1)
+        last_matchup_date = None
+        # Check if there are any previous matchups between the teams
+        if ((data['Visitor'] == team1) & (data['Home'] == team2) | (data['Visitor'] == team2) & (data['Home'] == team1)).any():
+            # Iterate over the DataFrame in reverse chronological order
+            for index, row in data.iloc[::-1].iterrows():
+                # Exclude today's games
+                if row['Date'] != today:
+                    if (row['Visitor'] == team1 and row['Home'] == team2) or (row['Visitor'] == team2 and row['Home'] == team1):
+                        last_matchup_date = row['Date']
+                        if last_matchup_date <= yesterday:  # Check if the last matchup date is on or before yesterday
+                            break  # Break out of the loop after finding the last matchup
+        return last_matchup_date
+
+
+
 
     run_top_calculations = st.checkbox("Generate Todays's Odds")
 
@@ -437,12 +454,6 @@ elif selection == '🏀 NBA Model':
         # Call the function to compute the values
         today_games = skipComputation(today_games)
 
-        def find_last_matchup_date(team1, team2, data):
-            last_matchup_date = None
-            for index, row in data.iterrows():
-                if (row['Visitor'] == team1 and row['Home'] == team2) or (row['Visitor'] == team2 and row['Home'] == team1):
-                    last_matchup_date = row['date1']  # Assuming your date column is named 'date1'
-            return last_matchup_date
         st.write("### Today's Games and Projected Odds:")
         for i, game in enumerate(today_games.itertuples(), start=1):
             st.subheader(f"{game.Visitor} *@* {game.Home}")
@@ -450,6 +461,12 @@ elif selection == '🏀 NBA Model':
             st.write(f"{game.Visitor} | **Projected Odds:** {game.ML_Away_Decimal_Odds:.3f}")
             st.write(f"Projected Over Under Line: {game.Constant:.1f}")            
             st.write(f"**Over Under Odds:** Over: {game.Totals_Probability['Over']:.2f}, Under: {game.Totals_Probability['Under']:.2f}")
+        # Dynamically call find_last_matchup_date function for each game
+            last_matchup_date = find_last_matchup_date(game.Visitor, game.Home, game_data, today)
+            st.write(f"Last matchup date between {game.Visitor} and {game.Home}: {last_matchup_date}")
+
+
+
 
             # Add a button under each matchup
             if st.button(f"More Info: {game.Home} vs {game.Visitor}"):
