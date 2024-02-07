@@ -8,7 +8,8 @@ from PIL import Image
 import os
 import scipy.stats as stats
 import plotly.express as px
-
+import base64
+from io import BytesIO
 st.set_page_config(page_title="Quantum Odds", page_icon="🔒", layout="wide")
 
 hide_st_style = """
@@ -54,7 +55,7 @@ time_zone = pytz.timezone('America/Los_Angeles')
 
 
 # Sidebar with a smaller width
-selection = st.sidebar.radio('Quantum Odds 	✅', ['🏠 Home','🏀 NBA Model','📊 NBA Power Rankings', '🚫 NBA Injuries','NBA Franchise Mode', '🏒 NHL Model', '📊 NHL Power Rankings', '🚫 NHL Injuries', '🔑 Betting Strategy', '💲Performance Tracking'])
+selection = st.sidebar.radio('Quantum Odds 	✅', ['🏠 Home','🏀 NBA Model','NBA Franchise Mode', '🏒 NHL Model', '🔑 Betting Strategy', '💲Performance Tracking'])
 
 if selection == '🏠 Home':
     # Main content
@@ -113,7 +114,7 @@ elif selection == '🏒 NHL Model':
             #""",
             #unsafe_allow_html=True
         #)
-        tab1, tab2, tab3, tab4= st.tabs(["Today's Games", "Tomorrow's Games", "Next Day's Games", "Injuries"])
+        tab1, tab2, tab3, tab4 = st.tabs(["Today's Games", "Tomorrow's Games", "Injuries","Rankings and Awards"])
 
         with tab1:
                 today_games['Projected_Score'] = (today_games['hometotal'] + today_games['vistotal']) 
@@ -238,78 +239,15 @@ elif selection == '🏒 NHL Model':
                     st.write(f"Projected Over Under Line: {game.Constant:.1f}")
                     st.write(
                         f"**Over Under Odds:** Over: {game.Totals_Probability['Over']:.2f}, Under: {game.Totals_Probability['Under']:.2f}")
-           
-        with tab3:                  
-                
-                            ##if selected_method == 'Decimal':
-                                # Calculate and display the over/under odds, implied probabilities, and projected scores
-                tmrday_games['Projected_Score'] = (tmrday_games['hometotal'] + tmrday_games['vistotal']) 
-
-                # Calculate the projected Money Line odds
-                tmrday_games['Projected_Line'] = 0.3 * tmrday_games['ml1'] + 0.45 * tmrday_games['ml2'] + 0.25 * tmrday_games['ml3']
-
-                # Round the constant to the nearest 0.5 using round_half_even
-                tmrday_games['Constant'] = np.round(tmrday_games['Projected_Score'] / 0.5) * 0.5
-
-                # Set the standard deviation
-                std_deviation_overunder = 1.67
-                std_deviation_ml = 2.48
-
-                # Calculate implied prob for ML
-                tmrday_games['ML_Home_Prob'] = tmrday_games.apply(
-                    lambda row: stats.norm.cdf((row.Projected_Line) / std_deviation_ml),
-                    axis=1
-                )
-
-                tmrday_games['ML_Away_Prob'] = tmrday_games.apply(
-                    lambda row: stats.norm.cdf(- (row.Projected_Line) / std_deviation_ml),
-                    axis=1
-                )
-
-                # Convert implied probabilities to decimal odds for ML
-                tmrday_games['ML_Home_Decimal_Odds'] = 1 / tmrday_games['ML_Home_Prob']
-                tmrday_games['ML_Away_Decimal_Odds'] = 1 / tmrday_games['ML_Away_Prob']
-
-                # Calculate the odds for over/under using the normal distribution
-                tmrday_games['Over_Under_Odds'] = tmrday_games.apply(
-                    lambda row: {
-                        'Over': 1 - stats.norm.cdf((row.Constant - row.Projected_Score) / std_deviation_overunder),
-                        'Under': stats.norm.cdf((row.Constant - row.Projected_Score) / std_deviation_overunder)
-                    },
-                    axis=1
-                )
-
-                # Calculate the implied probability percentages for Over/Under
-                tmrday_games['Totals_Probability'] = tmrday_games['Over_Under_Odds'].apply(
-                    lambda odds: {'Over': 1 / odds['Over'], 'Under': 1 / odds['Under']}
-                )
-
-                # Calculate decimal odds for Over/Under
-                tmrday_games['Totals_Decimal_Odds'] = tmrday_games['Totals_Probability'].apply(
-                    lambda odds: {'Over': odds['Over'] - 1, 'Under': odds['Under'] - 1}
-                )
-
-                # Display the odds for tomorrow's games in a Streamlit table
-                st.write("### Day After Tomorrow's Projected Odds:")
-
-                for i, game in enumerate(tmrday_games.itertuples(), start=1):
-                    st.subheader(f"{game.Visitor} *@* {game.Home}")
-                    st.write(f"{game.Home} | **Projected Odds:** {game.ML_Home_Decimal_Odds:.3f}")
-                    st.write(f"{game.Visitor} | **Projected Odds:** {game.ML_Away_Decimal_Odds:.3f}")
-
-                    st.write(f"Projected Over Under Line: {game.Constant:.1f}")
-                    st.write(
-                        f"**Over Under Odds:** Over: {game.Totals_Probability['Over']:.2f}, Under: {game.Totals_Probability['Under']:.2f}")
-                
+                         
                 
             ##elif selected_method == 'American':
                 ##st.subheader('Coming soon - Decimal only')
                     
-        with tab4:
+        with tab3:
                 excel_file = 'nhlgar.xlsx'
                 sheet_name = 'Injuries'
-                st.title('NHL Injuries 🚫')
-                st.write('All injuries are included in model and power rankings.')
+                st.subheader('NHL Injuries 🚫')
                 # Load data from the specified sheet in the first Excel file
                 injury_data = pd.read_excel(excel_file, sheet_name=sheet_name)
                 teams = [
@@ -343,130 +281,91 @@ elif selection == '🏒 NHL Model':
 
                 # Display the HTML table in Streamlit
                 st.write(html_table, unsafe_allow_html=True)
+
+        with tab4:
+            # Assuming 'Power Rankings' sheet contains the data
+            excel_file = 'nhl.xlsx'
+            excel_file2 = 'nhlgar.xlsx'
+            sheet_name = 'Power Rankings'
+            sheet_name2 = "Playerrankings"
             
 
-elif selection == '📊 NHL Power Rankings':
-    # Assuming 'Power Rankings' sheet contains the data
-    excel_file = 'nhl.xlsx'
-    excel_file2 = 'nhlgar.xlsx'
-    sheet_name = 'Power Rankings'
-    sheet_name2 = "Playerrankings"
-    
+            # Load data from the specified sheet in the first Excel file
+            game_data = pd.read_excel(excel_file, sheet_name=sheet_name)
 
-    # Load data from the specified sheet in the first Excel file
-    game_data = pd.read_excel(excel_file, sheet_name=sheet_name)
+            # Sort the data based on the 'powerranking' column (assuming it's in column 'powerranking')
+            sorted_data = game_data.sort_values(by='powerranking')
+            
+            # Load data from the specified sheet in the second Excel file
+            game_data2 = pd.read_excel(excel_file2, sheet_name=sheet_name2)
 
-    # Sort the data based on the 'powerranking' column (assuming it's in column 'powerranking')
-    sorted_data = game_data.sort_values(by='powerranking')
-    
-    # Load data from the specified sheet in the second Excel file
-    game_data2 = pd.read_excel(excel_file2, sheet_name=sheet_name2)
+            # Sort the data based on the 'topplayer' column (assuming it's in column 'topplayer')
+            sorted_data2 = game_data2.sort_values(by='Rank')
+            
+            # Create a two-column layout
+            col1, col2 = st.columns(2)  
 
-    # Sort the data based on the 'topplayer' column (assuming it's in column 'topplayer')
-    sorted_data2 = game_data2.sort_values(by='Rank')
-    
-    # Create a two-column layout
-    col1, col2 = st.columns(2)  
-
-  
-        # Display content in the left column
-    with col1:
-                
-        st.subheader("Team Rankings")
-
-       # Rename the columns for display
-        display_data = sorted_data[['powerranking', 'Team']].rename(columns={'Team': 'Team', 'powerranking': 'Rank'})
-
-        # Display the DataFrame without the index column
-        st.dataframe(display_data, hide_index=True)
-
-        st.subheader("Model's Top Players")
-
-        # Rename the columns for display and round 'mpg' to one decimal place
-        display_data = sorted_data2[['Rank','topplayer', 'playteam','pos', 'gp', 'g', 'p', 'mpg']].rename(columns={'Rank': 'Rank','topplayer': 'Player', 'playteam': 'Team','pos': 'Pos', 'gp': 'GP', 'g':'Goals','p':'Points', 'mpg': 'MPG'})
-
-        # Handle non-finite values before rounding and converting to integers
-        display_data['MPG'] = display_data['MPG'].apply(lambda x: f"{x:.1f}" if not pd.isnull(x) else "0.000")
-
-        display_data['Points'] = display_data['Points'].fillna(0).astype(int)
-        display_data['Goals'] = display_data['Goals'].fillna(0).astype(int)
-        display_data['GP'] = display_data['GP'].fillna(0).astype(int)
-
-        # Display the DataFrame without the index column
-        st.dataframe(display_data.head(15), hide_index=True)
-    # Add your code for the right column here
-    with col2:
-
-        st.subheader("Model's Top Goalies")
-
-        display_data = sorted_data2[['Rank', 'topgoalie', 'golteam', 'gs', 'sv%', 'qs']].rename(columns={'topgoalie': 'Goalie', 'golteam': 'Team', 'gs': 'GS', 'sv%': 'SV%', 'qs': 'Quality Starts'})
-
-        # Handle non-finite values before converting to integers
-        display_data['GS'] = display_data['GS'].fillna(0).astype(int)
-        display_data['Quality Starts'] = display_data['Quality Starts'].fillna(0).astype(int)
         
-        # Display the DataFrame without the index column
-        st.dataframe(display_data.head(10), hide_index=True)
+                # Display content in the left column
+            with col1:
+                        
+                st.subheader("Team Rankings")
 
-             
-       
-        st.subheader("Model's Top Rookies")
-        display_data = sorted_data2[['Rank','bestrookies', 'rook team', 'pos1', 'gp1', 'g1','p1','mpg1']].rename(columns={'Rank': 'Rank','bestrookies': 'Rookie', 'rook team': 'Team', 'gp1': 'GP', 'pos1': 'Pos', 'mpg1': 'MPG','g1':'Goals','p1':'Points'})
+            # Rename the columns for display
+                display_data = sorted_data[['powerranking', 'Team']].rename(columns={'Team': 'Team', 'powerranking': 'Rank'})
 
-        # Handle non-finite values before rounding and converting to integers
-        display_data['MPG'] = display_data['MPG'].apply(lambda x: f"{x:.1f}" if not pd.isnull(x) else "0.000")
-        display_data['Points'] = display_data['Points'].fillna(0).astype(int)
-        display_data['Goals'] = display_data['Goals'].fillna(0).astype(int)
-        display_data['GP'] = display_data['GP'].fillna(0).astype(int)
-              
-        # Display the DataFrame without the index column
-        st.dataframe(display_data, hide_index=True)
+                # Display the DataFrame without the index column
+                st.dataframe(display_data, hide_index=True)
 
+                st.subheader("Model's Top Players")
 
-elif selection == '🚫 NHL Injuries':
-    excel_file = 'nhlgar.xlsx'
-    sheet_name = 'Injuries'
-    st.title('NHL Injuries 🚫')
-    st.write('All injuries are included in model and power rankings.')
-    # Load data from the specified sheet in the first Excel file
-    injury_data = pd.read_excel(excel_file, sheet_name=sheet_name)
-    teams = [
-        "Anaheim Ducks", "Arizona Coyotes", "Boston Bruins", "Buffalo Sabres", "Calgary Flames",
-        "Carolina Hurricanes", "Chicago Blackhawks", "Colorado Avalanche", "Columbus Blue Jackets",
-        "Dallas Stars", "Detroit Red Wings", "Edmonton Oilers", "Florida Panthers", "Los Angeles Kings",
-        "Minnesota Wild", "Montreal Canadiens", "Nashville Predators", "New Jersey Devils",
-        "New York Islanders", "New York Rangers", "Ottawa Senators", "Philadelphia Flyers",
-        "Pittsburgh Penguins", "San Jose Sharks", "Seattle Kraken", "St. Louis Blues", "Tampa Bay Lightning",
-        "Toronto Maple Leafs", "Vancouver Canucks", "Vegas Golden Knights", "Washington Capitals", "Winnipeg Jets"
-    ]
+                # Rename the columns for display and round 'mpg' to one decimal place
+                display_data = sorted_data2[['Rank','topplayer', 'playteam','pos', 'gp', 'g', 'p', 'mpg']].rename(columns={'Rank': 'Rank','topplayer': 'Player', 'playteam': 'Team','pos': 'Pos', 'gp': 'GP', 'g':'Goals','p':'Points', 'mpg': 'MPG'})
 
+                # Handle non-finite values before rounding and converting to integers
+                display_data['MPG'] = display_data['MPG'].apply(lambda x: f"{x:.1f}" if not pd.isnull(x) else "0.000")
 
-    # Create a selection box for choosing the team
-    selected_team = st.selectbox('Select Team:', teams)
+                display_data['Points'] = display_data['Points'].fillna(0).astype(int)
+                display_data['Goals'] = display_data['Goals'].fillna(0).astype(int)
+                display_data['GP'] = display_data['GP'].fillna(0).astype(int)
 
+                # Display the DataFrame without the index column
+                st.dataframe(display_data.head(15), hide_index=True)
+            # Add your code for the right column here
+            with col2:
 
-    # Filter the injury data based on the selected team
-    filtered_data = injury_data[injury_data['Team'] == selected_team]
-    filtered_data.rename(columns={'Injury Note': 'Injury'}, inplace=True)
+                st.subheader("Model's Top Goalies")
 
-    # Select columns to display
-    columns_to_display = ['Player', 'Injury']
+                display_data = sorted_data2[['Rank', 'topgoalie', 'golteam', 'gs', 'sv%', 'qs']].rename(columns={'topgoalie': 'Goalie', 'golteam': 'Team', 'gs': 'GS', 'sv%': 'SV%', 'qs': 'Quality Starts'})
 
+                # Handle non-finite values before converting to integers
+                display_data['GS'] = display_data['GS'].fillna(0).astype(int)
+                display_data['Quality Starts'] = display_data['Quality Starts'].fillna(0).astype(int)
+                
+                # Display the DataFrame without the index column
+                st.dataframe(display_data.head(10), hide_index=True)
 
-    # Convert DataFrame to HTML table without index
-    html_table = filtered_data[columns_to_display].to_html(index=False)
+                    
+            
+                st.subheader("Model's Top Rookies")
+                display_data = sorted_data2[['Rank','bestrookies', 'rook team', 'pos1', 'gp1', 'g1','p1','mpg1']].rename(columns={'Rank': 'Rank','bestrookies': 'Rookie', 'rook team': 'Team', 'gp1': 'GP', 'pos1': 'Pos', 'mpg1': 'MPG','g1':'Goals','p1':'Points'})
 
-    # Add CSS styling to center the headers
-    html_table = html_table.replace('<thead>', '<thead style="text-align: center;"><style> th { text-align: center; }</style>', 1)
+                # Handle non-finite values before rounding and converting to integers
+                display_data['MPG'] = display_data['MPG'].apply(lambda x: f"{x:.1f}" if not pd.isnull(x) else "0.000")
+                display_data['Points'] = display_data['Points'].fillna(0).astype(int)
+                display_data['Goals'] = display_data['Goals'].fillna(0).astype(int)
+                display_data['GP'] = display_data['GP'].fillna(0).astype(int)
+                    
+                # Display the DataFrame without the index column
+                st.dataframe(display_data, hide_index=True)        
 
-    # Display the HTML table in Streamlit
-    st.write(html_table, unsafe_allow_html=True)
+ 
                     
 elif selection == '🏀 NBA Model':
     st.title('NBA Model 🏀')
     st.header("How the Model Works")
     st.write("The model generates odds from its projected probability of outcomes. Think of these odds as the minimum return you would require to make a positive EV bet.")
-    st.write("If a player is listed on the injury report as day-to-day the model will include them. Non day-to-day injuries will not be included. Click more details to see which players are not be included in the odds. The injury tab shows the complete injury report.")                               
+    st.write("If a player is listed on the injury report as day-to-day the model will include them. Non day-to-day injuries will not be included. Click more details to see which players are not included in the odds. The injury tab shows the complete injury report.")                               
     # Use a relative path to the Excel file
     excel_file = 'nba.xlsm'
 
@@ -503,7 +402,7 @@ elif selection == '🏀 NBA Model':
         return last_matchup_date
 
 
-    tab1, tab2, tab3= st.tabs(["Today's Games", "Tomorrow's Games", "Injuries"])
+    tab1, tab2, tab3, tab4 = st.tabs(["Today's Games", "Tomorrow's Games", "Injuries","Rankings and Awards"])
 
     with tab1:
 
@@ -806,95 +705,58 @@ elif selection == '🏀 NBA Model':
 
         # Display the HTML table in Streamlit
         st.write(html_table, unsafe_allow_html=True)
-
-
-
-
-elif selection == '📊 NBA Power Rankings':
-    excel_file = 'nba.xlsm'
-    sheet_name = 'Powerrankings'
-    sheet_name2 = "Topplayers"
-      
-
-    # Load data from the specified sheet in the first Excel file
-    game_data = pd.read_excel(excel_file, sheet_name=sheet_name)
-
-    # Sort the data based on the 'powerranking' column (assuming it's in column 'powerranking')
-    sorted_data = game_data.sort_values(by='Power')
-    game_data2 = pd.read_excel(excel_file, sheet_name=sheet_name2)
-
-    # Sort the data based on the 'topplayer' column (assuming it's in column 'topplayer')
-    sorted_data2 = game_data2.sort_values(by='Rank')
     
-    
+    with tab4:
+        excel_file = 'nba.xlsm'
+        sheet_name = 'Powerrankings'
+        sheet_name2 = "Topplayers"
         
-    # Create a two-column layout
-    col1, col2 = st.columns(2)  
 
-  
-        # Display content in the left column
-    with col1:
-        st.subheader("Team Rankings")
+        # Load data from the specified sheet in the first Excel file
+        game_data = pd.read_excel(excel_file, sheet_name=sheet_name)
 
-       # Rename the columns for display
-        display_data = sorted_data[['Power', 'Team','Off Rank','Def Rank']].rename(columns={'Power': 'Ranking'})
+        # Sort the data based on the 'powerranking' column (assuming it's in column 'powerranking')
+        sorted_data = game_data.sort_values(by='Power')
+        game_data2 = pd.read_excel(excel_file, sheet_name=sheet_name2)
 
-        # Display the DataFrame without the index column
-        st.dataframe(display_data, hide_index=True)
+        # Sort the data based on the 'topplayer' column (assuming it's in column 'topplayer')
+        sorted_data2 = game_data2.sort_values(by='Rank')
+        
+        
+            
+        # Create a two-column layout
+        col1, col2 = st.columns(2)  
 
-        st.subheader("Model's Top Players")
+    
+            # Display content in the left column
+        with col1:
+            st.subheader("Team Rankings")
 
-        display_data = sorted_data2[['Rank', 'topplayer', 'playteam', 'PTS', 'AST', 'REB','STL','BLK']].rename(columns={'topplayer': 'Player', 'playteam': 'Team'})
+        # Rename the columns for display
+            display_data = sorted_data[['Power', 'Team','Off Rank','Def Rank']].rename(columns={'Power': 'Ranking'})
 
-       
-        # Display the DataFrame without the index column
-        st.dataframe(display_data.head(15), hide_index=True)
+            # Display the DataFrame without the index column
+            st.dataframe(display_data, hide_index=True)
 
-             
-    with col2:
-        st.subheader("Models Top Rookies")
-        display_data = sorted_data2[['Rank', 'bestrook', 'rookteam', 'p1', 'a1', 'r1','s1','b1']].rename(columns={'bestrook': 'Player', 'rookteam': 'Team', 'p1': 'PTS', 'a1': 'AST','r1': 'REB', 's1': 'STL', 'b1' : 'BLK'})
-                           
-        # Display the DataFrame without the index column
-        st.dataframe(display_data.head(10), hide_index=True)
+            st.subheader("Model's Top Players")
 
-elif selection == '🚫 NBA Injuries':
-    excel_file = 'nba.xlsm'
-    sheet_name = 'Injuries'
-    st.title('NBA Injuries 🚫')
-    st.write('All injuries are included in model and power rankings.')
-    # Load data from the specified sheet in the first Excel file
-    injury_data = pd.read_excel(excel_file, sheet_name=sheet_name)
-    teams = [
-        "Atlanta Hawks", "Boston Celtics", "Brooklyn Nets", "Charlotte Hornets",
-        "Chicago Bulls", "Cleveland Cavaliers", "Dallas Mavericks", "Denver Nuggets",
-        "Detroit Pistons", "Golden State Warriors", "Houston Rockets", "Indiana Pacers",
-        "Los Angeles Clippers", "Los Angeles Lakers", "Memphis Grizzlies", "Miami Heat",
-        "Milwaukee Bucks", "Minnesota Timberwolves", "New Orleans Pelicans", "New York Knicks",
-        "Oklahoma City Thunder", "Orlando Magic", "Philadelphia 76ers", "Phoenix Suns",
-        "Portland Trail Blazers", "Sacramento Kings", "San Antonio Spurs", "Toronto Raptors",
-        "Utah Jazz", "Washington Wizards"
-    ]
+            display_data = sorted_data2[['Rank', 'topplayer', 'playteam', 'PTS', 'AST', 'REB','STL','BLK']].rename(columns={'topplayer': 'Player', 'playteam': 'Team'})
 
-    # Create a selection box for choosing the team
-    selected_team = st.selectbox('Select Team:', teams)
+        
+            # Display the DataFrame without the index column
+            st.dataframe(display_data.head(15), hide_index=True)
 
-    # Filter the injury data based on the selected team
-    filtered_data = injury_data[injury_data['Team'] == selected_team]
-    filtered_data.rename(columns={'Description': 'Injury'}, inplace=True)
-
-    # Select columns to display
-    columns_to_display = ['Player', 'Injury']
+                
+        with col2:
+            st.subheader("Models Top Rookies")
+            display_data = sorted_data2[['Rank', 'bestrook', 'rookteam', 'p1', 'a1', 'r1','s1','b1']].rename(columns={'bestrook': 'Player', 'rookteam': 'Team', 'p1': 'PTS', 'a1': 'AST','r1': 'REB', 's1': 'STL', 'b1' : 'BLK'})
+                            
+            # Display the DataFrame without the index column
+            st.dataframe(display_data.head(10), hide_index=True)
 
 
-    # Convert DataFrame to HTML table without index
-    html_table = filtered_data[columns_to_display].to_html(index=False)
 
-    # Add CSS styling to center the headers
-    html_table = html_table.replace('<thead>', '<thead style="text-align: center;"><style> th { text-align: center; }</style>', 1)
 
-    # Display the HTML table in Streamlit
-    st.write(html_table, unsafe_allow_html=True)
 
 elif selection == 'NBA Franchise Mode':
     st.title('Welcome to Franchise Mode')
@@ -940,24 +802,27 @@ elif selection == 'NBA Franchise Mode':
     # Display the HTML table in Streamlit
     st.write(html_table, unsafe_allow_html=True)
 
-
-
-
-
 elif selection == '🔑 Betting Strategy':
-     st.title('Strategy 🔑')
-     st.write('Our goal at Quantum Odds is to make our clients money. To make money gambling, you need relentless discipline and a strategy with an edge. The sports betting market is generally efficient and set up for you to lose (like all gambling). Lines are priced to the sportsbook’s implied probabilities, making every bet have an expected return of zero. After rake, every bet has negative expected return, explaining why most people lose. However, bettors have one strategic advantage over sportsbooks: flexibility. Sportsbooks need to post lines every day for every game in every sport and will eventually post a non-competitive line. Profitable bettors shop the market for these mistakes. Below is a step-by-step guide for how Quantum Odds will help you generate an edge.')            
-     st.subheader('Data Models')
-     st.write('The first step to our strategy is to generate odds before they are released. Using statistics and machine learning, we crunch real time player and team data to produce our lines. Our data models produce lines the same way sportsbooks do. Having lines ready before the sportsbook is crucial to allowing you to find inefficiencies quickly.')
-     st.subheader('Speed and Sportsbook Selection')   
-     st.write('Making positive EV bets is 75% data and 25% speed. The best time to find a great bet is right after a sportsbook drops their lines. After release, lines will shift rapidly as sharks place large bets on inefficiencies. Sportsbooks know these bets are sharp and will adjust their lines appropriately making them stronger. Compare Sportsbooks and find which ones consistently release odds first. Track when lines are released and place your bets within an hour of them being released. When the odds are dropped compare them to Quantum Odd’s models and find the inefficiencies.')
-     st.subheader('Line Shopping')
-     st.write('The last step of maximizing your EV is to line shop your bets. Place all your bets on the book that releases lines first, then watch other books release their odds. Generally, the closer to gametime the sharper the odds but sometimes you can cash out on your original bet to get better odds at another book. Do note, it rarely works to line shop if you pay a cash out penalty and this should be considered when picking your main book.')
-     st.write('Line shopping also allows you to back-test your bets. If lines consistently move in your favor, you must be making high value bets. ') 
-     st.subheader('Discipline') 
-     st.write('1. Unit size 2-4% of bank roll per bet')
-     st.write('2. Don’t bet for the sake of betting - no inefficiencies no bet')
-     st.write('3. Understand variance and how it impacts your returns')
+    tab1, tab2, tab3= st.tabs(["Overview", "Expected Value", "Varience"])
+    with tab1:
+            st.title('Strategy 🔑')
+            st.write('Our goal at Quantum Odds is to make our clients money. To make money gambling, you need relentless discipline and a strategy with an edge. The sports betting market is generally efficient and set up for you to lose (like all gambling). Lines are priced to the sportsbook’s implied probabilities, making every bet have an expected return of zero. After rake, every bet has negative expected return, explaining why most people lose. However, bettors have one strategic advantage over sportsbooks: flexibility. Sportsbooks need to post lines every day for every game in every sport and will eventually post a non-competitive line. Profitable bettors shop the market for these mistakes. Below is a step-by-step guide for how Quantum Odds will help you generate an edge.')            
+            st.subheader('Data Models')
+            st.write('The first step to our strategy is to generate odds before they are released. Using statistics and machine learning, we crunch real time player and team data to produce our lines. Our data models produce lines the same way sportsbooks do. Having lines ready before the sportsbook is crucial to allowing you to find inefficiencies quickly.')
+            st.subheader('Speed and Sportsbook Selection')   
+            st.write('Making positive EV bets is 75% data and 25% speed. The best time to find a great bet is right after a sportsbook drops their lines. After release, lines will shift rapidly as sharks place large bets on inefficiencies. Sportsbooks know these bets are sharp and will adjust their lines appropriately making them stronger. Compare Sportsbooks and find which ones consistently release odds first. Track when lines are released and place your bets within an hour of them being released. When the odds are dropped compare them to Quantum Odd’s models and find the inefficiencies.')
+            st.subheader('Line Shopping')
+            st.write('The last step of maximizing your EV is to line shop your bets. Place all your bets on the book that releases lines first, then watch other books release their odds. Generally, the closer to gametime the sharper the odds but sometimes you can cash out on your original bet to get better odds at another book. Do note, it rarely works to line shop if you pay a cash out penalty and this should be considered when picking your main book.')
+            st.write('Line shopping also allows you to back-test your bets. If lines consistently move in your favor, you must be making high value bets. ') 
+            st.subheader('Discipline') 
+            st.write('1. Unit size 2-4% of bank roll per bet')
+            st.write('2. Don’t bet for the sake of betting - no inefficiencies no bet')
+            st.write('3. Understand variance and how it impacts your returns')
+    with tab2:
+        st.title('What is Expected Value')
+
+    with tab3:
+        st.title('Varience in Gambling')
 
 elif selection == '💲Performance Tracking':
     # Define functions
@@ -1010,6 +875,7 @@ elif selection == '💲Performance Tracking':
         st.subheader(result)
         st.write(f'Starting Bank Roll = {starting_bank_role} | Current Bank Roll = {current_bank_role:.2f}')
 
+    
         # Format the percentage return for display
         formatted_percentage_return = f'<span style="font-size:24px; color:{color}; font-weight:bold;">{percentage_return:.2f}%</span>'
         # Use st.markdown for displaying HTML content
