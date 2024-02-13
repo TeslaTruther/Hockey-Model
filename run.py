@@ -992,48 +992,77 @@ elif selection == '🏀 NBA Model':
 
 
 elif selection == 'NBA Franchise Mode':
+    excel_file = 'nba.xlsm'
     st.title('Welcome to Franchise Mode')
     st.write('Filter NBA contracts and value players franchise worth.')
-    excel_file = 'nba.xlsm'
-    sheet_name = 'fran'
-    franchise_data = pd.read_excel(excel_file, sheet_name=sheet_name)
-    teams = [
-        "Atlanta Hawks", "Boston Celtics", "Brooklyn Nets", "Charlotte Hornets",
-        "Chicago Bulls", "Cleveland Cavaliers", "Dallas Mavericks", "Denver Nuggets",
-        "Detroit Pistons", "Golden State Warriors", "Houston Rockets", "Indiana Pacers",
-        "Los Angeles Clippers", "Los Angeles Lakers", "Memphis Grizzlies", "Miami Heat",
-        "Milwaukee Bucks", "Minnesota Timberwolves", "New Orleans Pelicans", "New York Knicks",
-        "Oklahoma City Thunder", "Orlando Magic", "Philadelphia 76ers", "Phoenix Suns",
-        "Portland Trail Blazers", "Sacramento Kings", "San Antonio Spurs", "Toronto Raptors",
-        "Utah Jazz", "Washington Wizards"
-    ]
 
-    # Create a selection box for choosing the team
-    selected_team = st.selectbox('Select Team:', teams)
-    # Filter the data based on the selected team
-    filtered_data = franchise_data[franchise_data['Team'] == selected_team]
+    tab1, tab2 = st.tabs(["Team Totals", "Player Value"])
 
-    # Sort the filtered data by the 'Value' column
-    filtered_data = filtered_data.sort_values(by='Value', ascending=False)
-    
-    # Format 'AAV' and 'Age' columns to display with two decimal points and no decimal points respectively
-    filtered_data['AAV'] = filtered_data['AAV'].round(2)
-    filtered_data['Age'] = filtered_data['Age'].round(0)
+    with tab1:
+        sheet_name1 = 'franstan'         
+        franchise_data1 = pd.read_excel(excel_file, sheet_name=sheet_name1)
+        sorted_data2 = franchise_data1.sort_values(by='salRank', ascending= False)
+        sorted_data2.rename(columns={'salRank': 'Franchise Score', 'Draftcap' : 'Draft Capital Rank'}, inplace=True)
+        sorted_data2['Franchise Score'] = sorted_data2['Franchise Score'].round(1)
 
-    # Format 'Value' column to display with two decimal points
-    filtered_data['Value'] = filtered_data['Value'].apply(lambda x: f'{x:.2f}')
+        # Select columns to display
+        columns_to_display = ['Team','Franchise Score', 'Draft Capital Rank']
 
-    # Select columns to display
-    columns_to_display = ['Player', 'Age', 'AAV', 'Years', 'Value']
+        # Convert DataFrame to HTML table without index
+        html_table = sorted_data2[columns_to_display].to_html(index=False)
 
-    # Convert DataFrame to HTML table without index
-    html_table = filtered_data[columns_to_display].to_html(index=False)
+        # Add CSS styling to center the headers 
+        html_table = html_table.replace('<thead>', '<thead style="text-align: center;"><style> th { text-align: center; }</style>', 1)
 
-    # Add CSS styling to center the headers
-    html_table = html_table.replace('<thead>', '<thead style="text-align: center;"><style> th { text-align: center; }</style>', 1)
+        # Display the HTML table in Streamlit
+        st.write(html_table, unsafe_allow_html=True)
+        
+    with tab2:
+        excel_file = 'nba.xlsm'
+        sheet_name = 'fran'
+        
+        
+        franchise_data = pd.read_excel(excel_file, sheet_name=sheet_name)
+       
+        teams = [
+            "Atlanta Hawks", "Boston Celtics", "Brooklyn Nets", "Charlotte Hornets",
+            "Chicago Bulls", "Cleveland Cavaliers", "Dallas Mavericks", "Denver Nuggets",
+            "Detroit Pistons", "Golden State Warriors", "Houston Rockets", "Indiana Pacers",
+            "Los Angeles Clippers", "Los Angeles Lakers", "Memphis Grizzlies", "Miami Heat",
+            "Milwaukee Bucks", "Minnesota Timberwolves", "New Orleans Pelicans", "New York Knicks",
+            "Oklahoma City Thunder", "Orlando Magic", "Philadelphia 76ers", "Phoenix Suns",
+            "Portland Trail Blazers", "Sacramento Kings", "San Antonio Spurs", "Toronto Raptors",
+            "Utah Jazz", "Washington Wizards"
+        ]
 
-    # Display the HTML table in Streamlit
-    st.write(html_table, unsafe_allow_html=True)
+        # Create a selection box for choosing the team
+        selected_team = st.selectbox('Select Team:', teams)
+        # Filter the data based on the selected team
+        filtered_data = franchise_data[franchise_data['team'] == selected_team]
+
+        # Sort the filtered data by the 'Value' column
+        filtered_data = filtered_data.sort_values(by='Value', ascending=False)
+        
+        # Format 'AAV' and 'Age' columns to display with two decimal points and no decimal points respectively
+        filtered_data['AAV'] = filtered_data['AAV'].round(2)
+        filtered_data['Age'] = filtered_data['Age'].round(0)
+
+        # Format 'Value' column to display with two decimal points
+        filtered_data['Value'] = filtered_data['Value'].apply(lambda x: f'{x:.2f}')
+
+        # Select columns to display
+        columns_to_display = ['Player', 'Age', 'AAV', 'Years', 'Value']
+
+        # Convert DataFrame to HTML table without index
+        html_table = filtered_data[columns_to_display].to_html(index=False)
+
+        # Add CSS styling to center the headers
+        html_table = html_table.replace('<thead>', '<thead style="text-align: center;"><style> th { text-align: center; }</style>', 1)
+
+        # Display the HTML table in Streamlit
+        st.write(html_table, unsafe_allow_html=True)
+
+
 
 elif selection == '🔑 Betting Strategy':
     tab1, tab2, tab3= st.tabs(["Overview", "Expected Value", "Varience"])
