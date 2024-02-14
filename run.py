@@ -10,6 +10,7 @@ import scipy.stats as stats
 import plotly.express as px
 import base64
 from io import BytesIO
+from nba_api.stats.endpoints import leaguestandingsv3
 st.set_page_config(page_title="Quantum Odds", page_icon="🔒", layout="wide")
 
 hide_st_style = """
@@ -64,6 +65,8 @@ if selection == '🏠 Home':
     st.write("Find inefficient markets and make positive expected value bets.")   
      
     st.image(resized_pandas[0])    
+
+
 
  
 elif selection == '🏒 NHL Model':
@@ -599,6 +602,35 @@ elif selection == '🏀 NBA Model':
                         break  # Break out of the loop after finding the last matchup
 
         return last_matchup_date, last_matchup_scores
+    def get_team_id(team_name):
+        team_id_mapping = {}
+        with open('nbateamid.txt', 'r') as f:
+            for line in f:
+                team_name_from_file, team_id = line.strip().split(',')  
+                team_id_mapping[team_name_from_file] = int(team_id) # Convert ID to integer
+
+        return team_id_mapping.get(team_name)
+    
+    # Customize for the current season 
+    current_season = "2023-24"  
+
+    # Get standings via the API
+    standings_data = leaguestandingsv3.LeagueStandingsV3(
+    )
+
+    # Get the DataFrame directly
+    standings_df = standings_data.get_data_frames()[0]
+    standings_df['TeamCity'] = standings_df['TeamCity'].replace('LA', 'Los Angeles')
+
+
+    # Select columns, sort, and perform any other manipulations as needed
+    columns_to_keep = ['TeamName','TeamCity','L10', 'Last10Home', 'Last10Road','WinPCT'] 
+    standings_df = standings_df[columns_to_keep]\
+    
+    
+
+
+
 
     
 
@@ -660,6 +692,8 @@ elif selection == '🏀 NBA Model':
 
                 # Call the function to compute the values
                 today_games = skipComputation(today_games)
+                # Calculate last 10 win percentage
+
 
                 st.write("### Today's Projected Odds:")
                 for i, game in enumerate(today_games.itertuples(), start=1):
@@ -720,14 +754,43 @@ elif selection == '🏀 NBA Model':
                             notable_injuries = team_injuries['name'].tolist()
                             if notable_injuries:
                                 injuries_string = ", ".join(notable_injuries)
-                                st.write(f"Injuries:", injuries_string)
+                                st.write(f" * Injuries:", injuries_string)
                             else:
-                                st.write("No important injuries")
+                                st.write(f" * No important injuries")
                             # Check if the visitor team played yesterday
+
+                            standings_df['Combined'] = standings_df['TeamCity'] + " " + standings_df['TeamName']
+                            
+                            home_team_data = standings_df[standings_df['Combined'] == game.Home]  
+
+                            l10_home = home_team_data['L10'].iloc[0]
+                            last10home_home = home_team_data['Last10Home'].iloc[0]
+                            last10road_home = home_team_data['Last10Road'].iloc[0]
+
+                            # Calculate last 10 win percentage 
+                            wins_last_10 = int(l10_home.split('-')[0])  
+                            last_10_win_pct = wins_last_10 / 10   
+
+                            # Get overall win percentage
+                            overall_win_pct = home_team_data['WinPCT'].iloc[0]
+
+                            # Determine emoji with threshold
+                            threshold = 0.2
+                            if last_10_win_pct >= overall_win_pct + threshold: 
+                                emoji = "🔥" 
+                            elif last_10_win_pct <= overall_win_pct - threshold:
+                                emoji = "🥶"  # Cold emoji 
+                            else:
+                                emoji = "➖"  # No emoji if within the threshold
+
+                            # Display with emoji
+                            st.write(f" * Last 10: {l10_home} / Last 10 Home: {last10road_home} / Recent Trend: {emoji}") 
+                              
                             if not home_yesterday.empty:
-                                st.write(f"{game.Home} played yesterday")
+                                st.write(f" * {game.Home} played yesterday")
                             else:
                                 pass
+                            
 
                         with col2:
                             st.write(f"{game.Visitor}:")
@@ -747,15 +810,41 @@ elif selection == '🏀 NBA Model':
                             notable_injuries = team_injuries['name'].tolist()
                             if notable_injuries:
                                 injuries_string = ", ".join(notable_injuries)
-                                st.write("Injuries:", injuries_string)
+                                st.write(f" * Injuries:", injuries_string)
                             else:
-                                st.write("No important injuries")
+                                st.write(f" * No important injuries")
                             # Check if the visitor team played yesterday
+
+                            standings_df['Combined'] = standings_df['TeamCity'] + " " + standings_df['TeamName']
+
+                            vis_team_data = standings_df[standings_df['Combined'] == game.Visitor]
+
+                            l10_vis = vis_team_data['L10'].iloc[0]
+                            last10road_vis = vis_team_data['Last10Road'].iloc[0]
+
+                            # Calculate last 10 win percentage for the visitor
+                            wins_last_10_vis = int(l10_vis.split('-')[0])  
+                            last_10_win_pct_vis = wins_last_10_vis / 10   
+
+                            # Get overall win percentage for the visitor
+                            overall_win_pct_vis = vis_team_data['WinPCT'].iloc[0]
+
+                            # Determine emoji with threshold for the visitor
+                            threshold = 0.2
+                            if last_10_win_pct_vis >= overall_win_pct_vis + threshold: 
+                                emoji_vis = "🔥" 
+                            elif last_10_win_pct_vis <= overall_win_pct_vis - threshold:
+                                emoji_vis = "🥶"  # Cold emoji 
+                            else:
+                                emoji_vis = "➖" 
+
+                            # Display stats for the visitor 
+                            st.write(f" * Last 10: {l10_vis} / Last 10 Away: {last10road_vis} / Recent Trend: {emoji_vis}") 
+                            
                             if not visitor_yesterday.empty:
-                                st.write(f"{game.Visitor} played yesterday")
+                                st.write(f" * {game.Visitor} played yesterday")
                             else:
                                 pass
-
 
                     
 
@@ -854,51 +943,105 @@ elif selection == '🏀 NBA Model':
 
                     
                     # Create a two-column layout for displaying team injuries
+
                     col1, col2 = st.columns(2)
-                    
                     with col1:
-                        st.subheader(f"{game.Home}:")
-                        # Load the Excel file into a DataFrame
-                        df = pd.read_excel(excel_file, sheet_name=sheet_name)
-                        # Filter the DataFrame to get injured players
-                        injured_players = df[df['missing'] > 20]
-                        # Filter the DataFrame to get injuries for the specific team
-                        team_injuries = injured_players[injured_players['team1'] == game.Home]
-                        # Display notable injuries for the team
-                        notable_injuries = team_injuries['name'].tolist()
-                        if notable_injuries:
-                            injuries_string = ", ".join(notable_injuries)
-                            st.write(f"Injuries:", injuries_string)
-                        else:
-                            st.write("No important injuries")
-                                
-                            # Check if the home team played yesterday
-                        if game.Home in today_games['Home'].values or game.Home in today_games['Visitor'].values:
-                            st.write(f"{game.Home} back-to-back game")
-                        else :
-                            pass
+                            st.subheader(f"{game.Home}:")
+                            # Load the Excel file into a DataFrame
+                            df = pd.read_excel(excel_file, sheet_name=sheet_name)
+                            # Filter the DataFrame to get injured players
+                            injured_players = df[df['missing'] > 20]
+                            # Filter the DataFrame to get injuries for the specific team
+                            team_injuries = injured_players[injured_players['team1'] == game.Home]
+                            # Display notable injuries for the team
+                            notable_injuries = team_injuries['name'].tolist()
+                            if notable_injuries:
+                                injuries_string = ", ".join(notable_injuries)
+                                st.write(f"Injuries:", injuries_string)
+                            else:
+                                st.write("No important injuries")
+
+                            standings_df['Combined'] = standings_df['TeamCity'] + " " + standings_df['TeamName']
+                            home_team_data = standings_df[standings_df['Combined'] == game.Home]  
+                            
+                            l10_home = home_team_data['L10'].iloc[0]
+                            last10home_home = home_team_data['Last10Home'].iloc[0]
+                            last10road_home = home_team_data['Last10Road'].iloc[0]
+
+                                    # Calculate last 10 win percentage 
+                            wins_last_10 = int(l10_home.split('-')[0])  
+                            last_10_win_pct = wins_last_10 / 10   
+
+                                    # Get overall win percentage
+                            overall_win_pct = home_team_data['WinPCT'].iloc[0]
+
+                                    # Determine emoji with threshold
+                            threshold = 0.2
+                            if last_10_win_pct >= overall_win_pct + threshold: 
+                                        emoji = "🔥" 
+                            elif last_10_win_pct <= overall_win_pct - threshold:
+                                        emoji = "🥶"  # Cold emoji 
+                            else:
+                                        emoji = "➖"  # No emoji if within the threshold
+
+                                    # Display with emoji
+                            st.write(f" * Last 10: {l10_home} / Last 10 Home: {last10road_home} / Recent Trend: {emoji}")  
+                                    
+                                # Check if the home team played yesterday
+                            if game.Home in today_games['Home'].values or game.Home in today_games['Visitor'].values:
+                                st.write(f"{game.Home} back-to-back game")
+                            else :
+                                pass
                     
                     with col2:
-                        st.subheader(f"{game.Visitor}:")
-                        # Load the Excel file into a DataFrame
-                        df = pd.read_excel(excel_file, sheet_name=sheet_name)
-                        # Filter the DataFrame to get injured players
-                        injured_players = df[df['missing'] > 20]
-                        # Filter the DataFrame to get injuries for the specific team
-                        team_injuries = injured_players[injured_players['team1'] == game.Visitor]
-                        # Display notable injuries for the team
-                        notable_injuries = team_injuries['name'].tolist()
-                        if notable_injuries:
-                            injuries_string = ", ".join(notable_injuries)
-                            st.write("Injuries:", injuries_string)
-                        else:
-                            st.write("No important injuries")
+                            st.subheader(f"{game.Visitor}:")
+                            # Load the Excel file into a DataFrame
+                            df = pd.read_excel(excel_file, sheet_name=sheet_name)
+                            # Filter the DataFrame to get injured players
+                            injured_players = df[df['missing'] > 20]
+                            # Filter the DataFrame to get injuries for the specific team
+                            team_injuries = injured_players[injured_players['team1'] == game.Visitor]
+                            # Display notable injuries for the team
+                            notable_injuries = team_injuries['name'].tolist()
+                            if notable_injuries:
+                                injuries_string = ", ".join(notable_injuries)
+                                st.write("Injuries:", injuries_string)
+                            else:
+                                st.write("No important injuries")
+                                                      
+                            vis_team_data = standings_df[standings_df['Combined'] == game.Visitor]
+
+                            
+                            l10_vis = vis_team_data['L10'].iloc[0]
+                            last10road_vis = vis_team_data['Last10Road'].iloc[0]
+
+                                # Calculate last 10 win percentage for the visitor
+                            wins_last_10_vis = int(l10_vis.split('-')[0])  
+                            last_10_win_pct_vis = wins_last_10_vis / 10   
+
+                                # Get overall win percentage for the visitor
+                            overall_win_pct_vis = vis_team_data['WinPCT'].iloc[0]
+
+                                # Determine emoji with threshold for the visitor
+                            threshold = 0.2
+                            if last_10_win_pct_vis >= overall_win_pct_vis + threshold: 
+                                    emoji_vis = "🔥" 
+                            elif last_10_win_pct_vis <= overall_win_pct_vis - threshold:
+                                    emoji_vis = "🥶"  # Cold emoji 
+                            else:
+                                    emoji_vis = "➖" 
+
+                                # Display stats for the visitor 
+                            st.write(f" * Last 10: {l10_vis} / Last 10 Away: {last10road_vis} / Recent Trend: {emoji_vis}") 
+
+                       
+
                             # Check if the visitor team played yesterday
-                        if game.Visitor in today_games['Home'].values or game.Visitor in today_games['Visitor'].values:
-                            st.write(f"{game.Visitor} back-to-back game")
-                        else:
-                            pass
-                                                
+                            if game.Visitor in today_games['Home'].values or game.Visitor in today_games['Visitor'].values:
+                                st.write(f"{game.Visitor} back-to-back game")
+                            else:
+                                pass
+                                                    
 
 
 
@@ -943,49 +1086,46 @@ elif selection == '🏀 NBA Model':
         excel_file = 'nba.xlsm'
         sheet_name = 'Powerrankings'
         sheet_name2 = "Topplayers"
-        
-
-        # Load data from the specified sheet in the first Excel file
+    # Load data from the specified sheet in the first Excel file
         game_data = pd.read_excel(excel_file, sheet_name=sheet_name)
-
-        # Sort the data based on the 'powerranking' column (assuming it's in column 'powerranking')
-        sorted_data = game_data.sort_values(by='Power')
         game_data2 = pd.read_excel(excel_file, sheet_name=sheet_name2)
 
-        # Sort the data based on the 'topplayer' column (assuming it's in column 'topplayer')
+        # Sort the data (Do this once before your `display_...` functions)
+        sorted_data = game_data.sort_values(by='Power') 
         sorted_data2 = game_data2.sort_values(by='Rank')
-        
-        
-            
-        # Create a two-column layout
-        col1, col2 = st.columns(2)  
+        def display_team_rankings(data):
+            st.subheader("Power Rankings")
+            display_data = data[['Power', 'Team','Off Rank','Def Rank']].rename(columns={'Power': 'Ranking'})
+            st.table(display_data)  # No need for hide_index=True (improved in newer Streamlit)
+
+        def display_top_players(data):
+            st.subheader("Model's Top Players")
+            display_data = data[['Rank', 'topplayer', 'playteam', 'PTS', 'AST', 'REB','STL','BLK']].rename(columns={'topplayer': 'Player', 'playteam': 'Team'})
+            st.table(display_data.head(15))
+
+        def display_top_rookies(data):
+            st.subheader("Models Top Rookies")
+            display_data = data[['Rank', 'bestrook', 'rookteam', 'p1', 'a1', 'r1','s1','b1']].rename(columns={'bestrook': 'Player', 'rookteam': 'Team', 'p1': 'PTS', 'a1': 'AST','r1': 'REB', 's1': 'STL', 'b1' : 'BLK'})
+            st.table(display_data.head(10))
 
     
-            # Display content in the left column
-        with col1:
-            st.subheader("Team Rankings")
-
-        # Rename the columns for display
-            display_data = sorted_data[['Power', 'Team','Off Rank','Def Rank']].rename(columns={'Power': 'Ranking'})
-
-            # Display the DataFrame without the index column
-            st.dataframe(display_data, hide_index=True)
-
-            st.subheader("Model's Top Players")
-
-            display_data = sorted_data2[['Rank', 'topplayer', 'playteam', 'PTS', 'AST', 'REB','STL','BLK']].rename(columns={'topplayer': 'Player', 'playteam': 'Team'})
-
+        pages  = [
+        "Power Rankings","MVP Race", "Rookie of the Year","Most Improved Player"
+        ]
         
-            # Display the DataFrame without the index column
-            st.dataframe(display_data.head(15), hide_index=True)
+        # Create a selection box for choosing the team
+        selected_team = st.selectbox('Select Power Ranking:', pages)
 
-                
-        with col2:
-            st.subheader("Models Top Rookies")
-            display_data = sorted_data2[['Rank', 'bestrook', 'rookteam', 'p1', 'a1', 'r1','s1','b1']].rename(columns={'bestrook': 'Player', 'rookteam': 'Team', 'p1': 'PTS', 'a1': 'AST','r1': 'REB', 's1': 'STL', 'b1' : 'BLK'})
-                            
-            # Display the DataFrame without the index column
-            st.dataframe(display_data.head(10), hide_index=True)
+        # Display tables based on selection
+        if selected_team == "Power Rankings":
+            display_team_rankings(sorted_data) 
+        elif selected_team == "MVP Race":
+            display_top_players(sorted_data2)  # Assuming MVP data is in sorted_data2
+        elif selected_team == "Rookie of the Year":
+            display_top_rookies(sorted_data2)  # Assuming Rookie data is in sorted_data2
+        elif selected_team == "Most Improved Player":
+            # Add a placeholder or a message stating this feature is not yet implemented
+            st.write("Most Improved Player rankings coming soon!") 
 
 
 
