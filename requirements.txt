@@ -6,3 +6,4 @@ plotly==5.18.0
 openpyxl
 click==7.1.2
 protobuf==3.20.1
+nba_api
