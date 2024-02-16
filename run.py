@@ -9,6 +9,7 @@ import os
 import scipy.stats as stats
 import plotly.express as px
 import base64
+import requests
 from io import BytesIO
 from nba_api.stats.endpoints import leaguestandingsv3
 st.set_page_config(page_title="Quantum Odds", page_icon="🔒", layout="wide")
@@ -73,7 +74,74 @@ elif selection == '🏒 NHL Model':
            
        
         excel_file = 'nhl.xlsx'
+        def fetch_fanduel_nhl_odds():
+            # Your Odds API key
+            API_KEY = "0b8b0f798933d0c1e0ba7a7228ec21fa" 
 
+            # Endpoint for NHL odds
+            url = "https://api.the-odds-api.com/v4/sports/icehockey_nhl/odds/"
+
+            # Parameters for the API request
+            params = {
+                "apiKey": API_KEY,
+                "regions": "us",  # Focus on US bookmakers
+                "markets": "h2h,totals",  # Get moneyline and over/under odds
+                "oddsFormat": "decimal"  # Request odds in decimal format
+            }
+
+            # Send the API request
+            response = requests.get(url, params=params)
+
+            # Check if the request was successful
+            if response.status_code == 200:
+                data = response.json()
+
+                # Check if any odds are found
+                if data:
+                    nhl_odds = []
+                    for game in data:
+                        home_team = game['home_team']
+                        away_team = game['away_team']
+                        commence_time = game['commence_time']
+                        total_line = None
+                        total_written = False  # Flag to track if total line has been written
+
+                        # Find bookmakers and their odds
+                        bookmakers = game['bookmakers']
+                        for bookmaker in bookmakers:
+                            # Focus on FanDuel bookmaker
+                            if bookmaker['title'] == 'FanDuel':
+                                markets = bookmaker['markets']
+                                for market in markets:
+                                    # Check for moneyline odds
+                                    if market['key'] == 'h2h':
+                                        home_win_odds = market['outcomes'][0]['price']
+                                        away_win_odds = market['outcomes'][1]['price']
+                                    # Check for over/under odds
+                                    elif market['key'] == 'totals':
+                                        if not total_written:  # Write total line only once
+                                            total_line = f"{market['outcomes'][0]['point']}"
+                                            over_odds = market['outcomes'][0]['price']
+                                            under_odds = market['outcomes'][1]['price']
+                                            total_written = True
+
+                        nhl_odds.append({
+                            'home_team': home_team,
+                            'away_team': away_team,
+                            'commence_time': commence_time,
+                            'home_win_odds': home_win_odds,
+                            'away_win_odds': away_win_odds,
+                            'over_odds': over_odds,
+                            'under_odds': under_odds,
+                            'total_line': total_line
+                        })
+                    return nhl_odds
+                else:
+                    st.warning("No NHL odds found currently.")
+                    return []
+            else:
+                st.error("Request failed. Status code:", response.status_code)
+                return []
         # Load data from "Game Data" sheet
         game_data = pd.read_excel(excel_file, sheet_name="test")
 
@@ -186,6 +254,8 @@ elif selection == '🏒 NHL Model':
                 button_clicked = st.button("Generate Today's Odds")
 
                 if button_clicked:
+                    fanduel_nhl_odds = fetch_fanduel_nhl_odds()
+                    
                     # Display the odds for today's games in a Streamlit table
                     st.write("### Today's Projected Odds:")
                     for i, game in enumerate(today_games.itertuples(), start=1):                   
@@ -194,7 +264,26 @@ elif selection == '🏒 NHL Model':
                         st.write(f"{game.Visitor} | **Projected Odds:** {game.ML_Away_Decimal_Odds:.3f}")
                         st.write(f"Projected Over Under Line: {game.Constant:.1f}")            
                         st.write(f"**Over Under Odds:** Over: {game.Totals_Probability['Over']:.2f}, Under: {game.Totals_Probability['Under']:.2f}")
-                        
+                                    
+                    if fanduel_nhl_odds:
+                        st.write("NHL Moneyline Odds (FanDuel):")
+                        for odds_game in fanduel_nhl_odds:
+                            home_team = odds_game['home_team']
+                            away_team = odds_game['away_team']
+                            home_win_odds = odds_game['home_win_odds']
+                            away_win_odds = odds_game['away_win_odds']
+                            over_odds = odds_game['over_odds']
+                            under_odds = odds_game['under_odds']
+                            total_line = odds_game['total_line']
+                            
+                            # Check if the odds correspond to the current projected game
+                            if home_team == game.Home and away_team == game.Visitor:
+                                st.write(f"{game.Home}: {home_win_odds}, {game.Visitor}: {away_win_odds}")
+                                st.write(f"Total Line: {total_line}")
+                                st.write(f"Over: {over_odds}, Under: {under_odds}")
+                                
+                    # Display the expander button and its content
+
                         # Display the expander button and its content
                         with st.expander('More Details', expanded=False):
                             excel_file = 'nhl.xlsx'
@@ -340,8 +429,8 @@ elif selection == '🏒 NHL Model':
 
         # Check if the button is clicked
                 if button_clicked:
-
-
+                    fanduel_nhl_odds = fetch_fanduel_nhl_odds()
+                
                     for i, game in enumerate(tomorrow_games.itertuples(), start=1):
                         st.subheader(f"{game.Visitor} *@* {game.Home}")
                         st.write(f"{game.Home} | **Projected Odds:** {game.ML_Home_Decimal_Odds:.3f}")
@@ -350,7 +439,22 @@ elif selection == '🏒 NHL Model':
                         st.write(f"Projected Over Under Line: {game.Constant:.1f}")
                         st.write(
                             f"**Over Under Odds:** Over: {game.Totals_Probability['Over']:.2f}, Under: {game.Totals_Probability['Under']:.2f}")
-                        
+                        if fanduel_nhl_odds:
+                            st.write("NHL Moneyline Odds (FanDuel):")
+                            for odds_game in fanduel_nhl_odds:
+                                home_team = odds_game['home_team']
+                                away_team = odds_game['away_team']
+                                home_win_odds = odds_game['home_win_odds']
+                                away_win_odds = odds_game['away_win_odds']
+                                over_odds = odds_game['over_odds']
+                                under_odds = odds_game['under_odds']
+                                total_line = odds_game['total_line']
+                                
+                                # Check if the odds correspond to the current projected game
+                                if home_team == game.Home and away_team == game.Visitor:
+                                    st.write(f"{game.Home}: {home_win_odds}, {game.Visitor}: {away_win_odds}")
+                                    st.write(f"Total Line: {total_line}")
+                                    st.write(f"Over: {over_odds}, Under: {under_odds}")
                          # Display the expander button and its content
                         with st.expander('More Details', expanded=False):
                             excel_file = 'nhl.xlsx'
@@ -1293,42 +1397,5 @@ elif selection == '💲Performance Tracking':
         st.plotly_chart(fig, use_container_width=True)
 
 
-    # Display the details of the last 10 bets
-    st.subheader('Last 10 Bets')
-
-    # Assuming you have a 'Bet Details' column in your DataFrame, adjust this accordingly
-    last_10_bets_columns = ['Date1', 'Team', 'Performance', 'Odds Taken']  # Include 'Odds' in the list
-    last_10_bets = df_outcomes.tail(10)[last_10_bets_columns]
-
-    # Convert 'Date1' column to string and extract only the date part
-    last_10_bets['Date'] = df_outcomes['Date1'].astype(str).str.split().str[0]
-
-    # Rename columns
-    last_10_bets.rename(columns={'Team': 'Bet', 'Performance': 'G/L', 'Odds Taken': 'Odds'}, inplace=True)
-
-    # Convert 'G/L' column to numeric
-    last_10_bets['G/L'] = pd.to_numeric(last_10_bets['G/L'], errors='coerce').round(1)
-
-    # Drop the original 'Date1' column
-    last_10_bets.drop(columns=['Date1'], inplace=True)
-
-    # Reverse the order of rows
-    last_10_bets = last_10_bets.iloc[::-1]
-
-    # Highlight entire row based on conditions in any column
-    def highlight_row(row):
-        try:
-            numeric_val = float(row['G/L'])
-            color = 'background-color: green' if numeric_val > 0 else 'background-color: red' if numeric_val < 0 else ''
-            return f'<tr style="{color}"><td>{row["Date"]}</td><td>{row["Bet"]}</td><td>{row["G/L"]}</td><td>{row["Odds"]}</td></tr>'
-        except (ValueError, TypeError):
-            return ''
-
-    # Apply styling to the DataFrame
-    styled_last_10_bets = ''.join(last_10_bets.apply(highlight_row, axis=1))
-
-    # Display the HTML table with styling and headers using st.markdown
-    table_html = f'<table><thead><tr><th>Date</th><th>Bet</th><th>G/L</th><th>Odds</th></tr></thead>{styled_last_10_bets}</table>'
-    st.markdown(table_html, unsafe_allow_html=True)
-
+   
 
