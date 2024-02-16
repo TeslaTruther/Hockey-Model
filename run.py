@@ -137,7 +137,7 @@ elif selection == '🏒 NHL Model':
                         })
                     return nhl_odds
                 else:
-                    st.warning("No NHL odds found currently.")
+                    pass
                     return []
             else:
                 st.error("Request failed. Status code:", response.status_code)
@@ -265,25 +265,25 @@ elif selection == '🏒 NHL Model':
                         st.write(f"Projected Over Under Line: {game.Constant:.1f}")            
                         st.write(f"**Over Under Odds:** Over: {game.Totals_Probability['Over']:.2f}, Under: {game.Totals_Probability['Under']:.2f}")
                                                     
-                    if fanduel_nhl_odds:
-                        st.write("NHL Moneyline Odds (FanDuel):")
-                        for odds_game in fanduel_nhl_odds:
-                            home_team = odds_game['home_team']
-                            away_team = odds_game['away_team']
-                            home_win_odds = odds_game['home_win_odds']
-                            away_win_odds = odds_game['away_win_odds']
-                            over_odds = odds_game['over_odds']
-                            under_odds = odds_game['under_odds']
-                            total_line = odds_game['total_line']
-                            
-                            # Check if the odds correspond to the current projected game
-                            if home_team == game.Home and away_team == game.Visitor:
-                                st.write(f"{game.Home}: {home_win_odds}, {game.Visitor}: {away_win_odds}")
-                                st.write(f"Total Line: {total_line}")
-                                st.write(f"Over: {over_odds}, Under: {under_odds}")
-                    else:
-                        st.warning("No NHL odds found.")
-                    # Display the expander button and its content
+                        if fanduel_nhl_odds:
+                            st.write("NHL Moneyline Odds (FanDuel):")
+                            for odds_game in fanduel_nhl_odds:
+                                home_team = odds_game['home_team']
+                                away_team = odds_game['away_team']
+                                home_win_odds = odds_game['home_win_odds']
+                                away_win_odds = odds_game['away_win_odds']
+                                over_odds = odds_game['over_odds']
+                                under_odds = odds_game['under_odds']
+                                total_line = odds_game['total_line']
+                                
+                                # Check if the odds correspond to the current projected game
+                                if home_team == game.Home and away_team == game.Visitor:
+                                    st.write(f"{game.Home}: {home_win_odds}, {game.Visitor}: {away_win_odds}")
+                                    st.write(f"Total Line: {total_line}")
+                                    st.write(f"Over: {over_odds}, Under: {under_odds}")
+                        else:
+                            st.warning("No NHL odds found.")
+                        # Display the expander button and its content
 
                         # Display the expander button and its content
                         with st.expander('More Details', expanded=False):
@@ -440,25 +440,25 @@ elif selection == '🏒 NHL Model':
                         st.write(f"Projected Over Under Line: {game.Constant:.1f}")
                         st.write(
                             f"**Over Under Odds:** Over: {game.Totals_Probability['Over']:.2f}, Under: {game.Totals_Probability['Under']:.2f}")
-                    if fanduel_nhl_odds:
-                        st.write("NHL Moneyline Odds (FanDuel):")
-                        for odds_game in fanduel_nhl_odds:
-                            home_team = odds_game['home_team']
-                            away_team = odds_game['away_team']
-                            home_win_odds = odds_game['home_win_odds']
-                            away_win_odds = odds_game['away_win_odds']
-                            over_odds = odds_game['over_odds']
-                            under_odds = odds_game['under_odds']
-                            total_line = odds_game['total_line']
-                            
-                            # Check if the odds correspond to the current projected game
-                            if home_team == game.Home and away_team == game.Visitor:
-                                st.write(f"{game.Home}: {home_win_odds}, {game.Visitor}: {away_win_odds}")
-                                st.write(f"Total Line: {total_line}")
-                                st.write(f"Over: {over_odds}, Under: {under_odds}")
-                    else:
-                        st.warning("Odds not released.")
-                         # Display the expander button and its content
+                        if fanduel_nhl_odds:
+                            st.write("NHL Moneyline Odds (FanDuel):")
+                            for odds_game in fanduel_nhl_odds:
+                                home_team = odds_game['home_team']
+                                away_team = odds_game['away_team']
+                                home_win_odds = odds_game['home_win_odds']
+                                away_win_odds = odds_game['away_win_odds']
+                                over_odds = odds_game['over_odds']
+                                under_odds = odds_game['under_odds']
+                                total_line = odds_game['total_line']
+                                
+                                # Check if the odds correspond to the current projected game
+                                if home_team == game.Home and away_team == game.Visitor:
+                                    st.write(f"{game.Home}: {home_win_odds}, {game.Visitor}: {away_win_odds}")
+                                    st.write(f"Total Line: {total_line}")
+                                    st.write(f"Over: {over_odds}, Under: {under_odds}")
+                        else:
+                            st.warning("Odds not released.")
+                            # Display the expander button and its content
                         with st.expander('More Details', expanded=False):
                             excel_file = 'nhl.xlsx'
                             excel_file2 = 'nhlgar.xlsx'
