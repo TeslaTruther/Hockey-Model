@@ -1,0 +1,22 @@
+name: Update Database
+
+on:
+  push:
+    paths:
+      - 'mydata.db'
+
+jobs:
+  update_database:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Commit changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add mydata.db
+          git commit -m "Update database [skip ci]" || echo "No changes to commit"
+          git push

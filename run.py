@@ -57,7 +57,7 @@ time_zone = pytz.timezone('America/Los_Angeles')
 
 
 # Sidebar with a smaller width
-selection = st.sidebar.radio('Quantum Odds 	✅', ['🏠 Home','🏀 NBA Model','NBA Franchise Mode', '🏒 NHL Model', '🔑 Betting Strategy', '💲Performance Tracking'])
+selection = st.sidebar.radio('Quantum Odds 	✅', ['🏠 Home','🏀 NBA Model','🏀 NBA Franchise Mode', '🏒 NHL Model', '🔑 Betting Strategy', '💲Performance Tracking'])
 
 if selection == '🏠 Home':
     # Main content
@@ -1238,7 +1238,7 @@ elif selection == '🏀 NBA Model':
 
 
 
-elif selection == 'NBA Franchise Mode':
+elif selection == '🏀 NBA Franchise Mode':
     excel_file = 'nba.xlsm'
     st.title('Welcome to Franchise Mode')
     st.write('Filter NBA contracts and value players franchise worth.')
