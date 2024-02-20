@@ -124,15 +124,18 @@ elif selection == '🏒 NHL Model':
             rows = c.fetchall()
 
             conn.close()
-            
             if rows:
                 nhl_odds = {}
                 for row in rows:
+                    commence_time_str = row['commence_time']
+
+                    # Manually append 'T' to the datetime string
+                    commence_time_str_iso = commence_time_str + 'T'
+
+                    # Parse the datetime string
+                    commence_time_utc = datetime.fromisoformat(commence_time_str_iso).replace(tzinfo=pytz.utc)
                     home_team = row['home_team']
                     away_team = row['away_team']
-                    commence_time_str = row['commence_time']
-                    # Assume commence_time is stored in UTC
-                    commence_time_utc = datetime.fromisoformat(commence_time_str).replace(tzinfo=pytz.utc)
                     home_win_odds = row['home_win_odds']
                     away_win_odds = row['away_win_odds']
 
