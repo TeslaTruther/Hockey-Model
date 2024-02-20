@@ -126,29 +126,29 @@ elif selection == '🏒 NHL Model':
             conn.close()
             
             if rows:
-                nhl_odds = {}
-                for row in rows:
-                    home_team = row['home_team']
-                    away_team = row['away_team']
-                    commence_time_str = row['commence_time']
-                    commence_time = datetime.fromisoformat(commence_time_str).astimezone(pytz.timezone('UTC'))
-                    home_win_odds = row['home_win_odds']
-                    away_win_odds = row['away_win_odds']
+                    nhl_odds = {}
+                    for row in rows:
+                        home_team = row['home_team']
+                        away_team = row['away_team']
+                        commence_time_str = row['commence_time']
+                        commence_time = datetime.strptime(commence_time_str, "%Y-%m-%d %H:%M:%S").replace(tzinfo=pytz.utc).astimezone(pytz.timezone('America/Los_Angeles'))
+                        home_win_odds = row['home_win_odds']
+                        away_win_odds = row['away_win_odds']
 
-                    # Check if odds for the current game already exist and if they are more recent
-                    if (home_team, away_team) not in nhl_odds or nhl_odds[(home_team, away_team)]['commence_time'] < commence_time:
-                        nhl_odds[(home_team, away_team)] = {
-                            'home_team': home_team,
-                            'away_team': away_team,
-                            'commence_time': commence_time,
-                            'home_win_odds': home_win_odds,
-                            'away_win_odds': away_win_odds,
-                            # If 'over_odds', 'under_odds', 'total_line' are present in your table, include them here
-                        }
+                        # Check if odds for the current game already exist and if they are more recent
+                        if (home_team, away_team) not in nhl_odds or nhl_odds[(home_team, away_team)]['commence_time'] < commence_time:
+                            nhl_odds[(home_team, away_team)] = {
+                                'home_team': home_team,
+                                'away_team': away_team,
+                                'commence_time': commence_time.strftime("%Y-%m-%d %H:%M:%S"),  # Format to string
+                                'home_win_odds': home_win_odds,
+                                'away_win_odds': away_win_odds,
+                                # If 'over_odds', 'under_odds', 'total_line' are present in your table, include them here
+                            }
 
-                return list(nhl_odds.values())
+                    return list(nhl_odds.values())
             else:
-                return None
+                    return None
         # Load data from "Game Data" sheet
 
 
