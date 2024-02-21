@@ -124,18 +124,15 @@ elif selection == '🏒 NHL Model':
             rows = c.fetchall()
 
             conn.close()
+            
             if rows:
                 nhl_odds = {}
                 for row in rows:
-                    commence_time_str = row['commence_time']
-
-                    # Manually append 'T' to the datetime string
-                    commence_time_str_iso = commence_time_str + 'T'
-
-                    # Parse the datetime string
-                    commence_time_utc = datetime.fromisoformat(commence_time_str_iso).replace(tzinfo=pytz.utc)
                     home_team = row['home_team']
                     away_team = row['away_team']
+                    commence_time_str = row['commence_time']
+                    # Assume commence_time is stored in UTC
+                    commence_time_utc = datetime.fromisoformat(commence_time_str).replace(tzinfo=pytz.utc)
                     home_win_odds = row['home_win_odds']
                     away_win_odds = row['away_win_odds']
 
@@ -228,130 +225,130 @@ elif selection == '🏒 NHL Model':
                 if button_clicked:
                     nhl_odds = get_nhl_odds_from_database()
 
-                    if nhl_odds:                    
+                    if nhl_odds:
                         st.write("### Today's Projected Odds:")
                         for i, game in enumerate(today_games.itertuples(), start=1):
+                            odds_found = False
+                            odd_1, odd_2 = None, None  # Initialize odd variables
+                                                                    
+                            for odds_game in nhl_odds:
+                                # Check if the odds correspond to the game's home and away teams
+                                home_team, away_team = odds_game['home_team'], odds_game['away_team']
+                                if home_team < away_team:
+                                    odd_1, odd_2 = odds_game['home_win_odds'], odds_game['away_win_odds']
+                                else:
+                                    odd_1, odd_2 = odds_game['away_win_odds'], odds_game['home_win_odds']
+
+                                if (home_team == game.Home and away_team == game.Visitor) or \
+                                (home_team == game.Visitor and away_team == game.Home):
+                                    # If the odds match, assign them accordingly
+                                    odds_found = True
+                                    break
+
                             st.subheader(f"{game.Visitor} *@* {game.Home}")
-                            st.write(f"{game.Home} | **Projected Odds:** {game.ML_Home_Decimal_Odds:.3f}")
-                            st.write(f"{game.Visitor} | **Projected Odds:** {game.ML_Away_Decimal_Odds:.3f}")
+                            st.write(f"{game.Home} | **Projected Odds:** {game.ML_Home_Decimal_Odds:.3f}" + (" 🔥" if odd_1 is not None and game.ML_Home_Decimal_Odds < (odd_1) - 0.15 else ""))
+                            st.write(f"{game.Visitor} | **Projected Odds:** {game.ML_Away_Decimal_Odds:.3f}" + (" 🔥" if odd_2 is not None and game.ML_Away_Decimal_Odds < odd_2 - 0.15 else ""))
                             st.write(f"Projected Over Under Line: {game.Constant:.1f}")
                             st.write(f"**Over Under Odds:** Over: {game.Totals_Probability['Over']:.2f}, Under: {game.Totals_Probability['Under']:.2f}")
 
-                            # Find the odds for the current game
-                            odds_found = False
+                            # Write the Fandual odds
                             st.write("### Fandual Odds:")
-                            # Assuming your game.Date is in UTC timezone
-                            game_date = game.Date.replace(tzinfo=pytz.UTC)
-
-                            if game_date < datetime.now(pytz.UTC):
-                                st.write("Game Started")
+                            if odds_found:
+                                st.write(f"{game.Home}: {odd_1}, {game.Visitor}: {odd_2}")
                             else:
-                                for odds_game in nhl_odds:
-                                    # Check if the odds correspond to the game's home and away teams
-                                    home_team, away_team = odds_game['home_team'], odds_game['away_team']
-                                    if home_team < away_team:
-                                        odd_1, odd_2 = odds_game['home_win_odds'], odds_game['away_win_odds']
-                                    else:
-                                        odd_1, odd_2 = odds_game['away_win_odds'], odds_game['home_win_odds']
+                                st.write('No odds found')
+                                                            
+                                with st.expander('More Details', expanded=False):
+                                            excel_file = 'nhl.xlsx'
+                                            excel_file2 = 'nhlgar.xlsx'
+                                            sheet_name = 'test'
+                                            sheet_name2 = 'Skater2024'
+                                                                                        
+                                            yesterday = datetime.now(time_zone).replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(days=1)
+                                            yesterday_games = game_data[(game_data['Date'] >= yesterday) & (game_data['Date'] < yesterday + pd.DateOffset(1))]
 
-                                    if (home_team == game.Home and away_team == game.Visitor) or \
-                                    (home_team == game.Visitor and away_team == game.Home):
-                                        # If the odds match, assign them accordingly
-                                        st.write(f"{game.Home}: {odd_1}, {game.Visitor}: {odd_2}")
-                                        odds_found = True
-                                        break
+                                            home_yesterday = yesterday_games[(yesterday_games['Home'] == game.Home) | (yesterday_games['Visitor'] == game.Home)]
+                                            visitor_yesterday = yesterday_games[(yesterday_games['Home'] == game.Visitor) | (yesterday_games['Visitor'] == game.Visitor)]
 
-                            if not odds_found:
+                                            last_matchup_date, last_matchup_scores = find_last_matchup(game.Home, game.Visitor, game_data, today)
+
+                                            if last_matchup_date:
+                                                if last_matchup_date <= today:  # Check if the last matchup date is in the past or today
+                                                    formatted_last_matchup_date = last_matchup_date.strftime('%Y-%m-%d')
+                                                    
+                                                    # Determine which score corresponds to which team
+                                                    home_score_index = 0 if game.Home == last_matchup_scores[0] else 1
+                                                    away_score_index = 1 - home_score_index
+                                                    
+                                                    home_score = last_matchup_scores[home_score_index]
+                                                    away_score = last_matchup_scores[away_score_index]
+                                                    
+                                                    st.write(f"Last matchup: {formatted_last_matchup_date}  -  {game.Visitor}: {away_score} vs {game.Home}: {home_score}")
+                                                else:
+                                                    st.write("No matchups this season.")
+                                                col1, col2 = st.columns(2)
+
+                                                with col1:
+                                                    st.write(f"{game.Home}:")
+
+                                                    # Load the Excel file into a DataFrame
+                                                    df = pd.read_excel(excel_file2, sheet_name=sheet_name2)
+
+                                                    # Filter the DataFrame to get injured players
+                                                    injured_players = df[df['injury'] > 14]
+                                                
+                                                                                    
+                                                    
+                                                    # Filter the DataFrame to get injuries for the specific team
+                                                    team_injuries = injured_players[injured_players['team1'] == game.Home]
+
+                                                    notable_injuries = team_injuries['Player'].tolist()
+                                                                            
+                                                    if notable_injuries:
+                                                        injuries_string = ", ".join(notable_injuries)
+                                                        st.write(f"Injuries:", injuries_string)
+                                                    else:
+                                                        st.write("No important injuries")
+                                                    
+                                                    # Check if the visitor team played yesterday
+                                                    if not home_yesterday.empty:
+                                                        st.write(f"{game.Home} played yesterday")
+                                                    else:
+                                                        pass
+
+                                                with col2:
+                                                    st.write(f"{game.Visitor}:")
+
+                                                    # Load the Excel file into a DataFrame
+                                                    df = pd.read_excel(excel_file2, sheet_name=sheet_name2)
+
+                                                    # Filter the DataFrame to get injured players
+                                                    injured_players = df[df['injury'] > 14]
+
+                                                    # Filter the DataFrame to get injuries for the specific team
+                                                    team_injuries = injured_players[injured_players['team1'] == game.Visitor]
+
+                                                    # Display notable injuries for the team
+                                                    notable_injuries = team_injuries['Player'].tolist()
+                                                    if notable_injuries:
+                                                        injuries_string = ", ".join(notable_injuries)
+                                                        st.write("Injuries:", injuries_string)
+                                                    else:
+                                                        st.write("No important injuries")
+                                                    
+                                                    # Check if the visitor team played yesterday
+                                                    if not visitor_yesterday.empty:
+                                                        st.write(f"{game.Visitor} played yesterday")
+                                                    else:
+                                                        pass
+                    
                                 
 
 
                                 # Display the expander button and its content
 
                                 # Display the expander button and its content
-                                with st.expander('More Details', expanded=False):
-                                    excel_file = 'nhl.xlsx'
-                                    excel_file2 = 'nhlgar.xlsx'
-                                    sheet_name = 'test'
-                                    sheet_name2 = 'Skater2024'
-                                                                                
-                                    yesterday = datetime.now(time_zone).replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(days=1)
-                                    yesterday_games = game_data[(game_data['Date'] >= yesterday) & (game_data['Date'] < yesterday + pd.DateOffset(1))]
-
-                                    home_yesterday = yesterday_games[(yesterday_games['Home'] == game.Home) | (yesterday_games['Visitor'] == game.Home)]
-                                    visitor_yesterday = yesterday_games[(yesterday_games['Home'] == game.Visitor) | (yesterday_games['Visitor'] == game.Visitor)]
-
-                                    last_matchup_date, last_matchup_scores = find_last_matchup(game.Home, game.Visitor, game_data, today)
-
-                                    if last_matchup_date:
-                                        if last_matchup_date <= today:  # Check if the last matchup date is in the past or today
-                                            formatted_last_matchup_date = last_matchup_date.strftime('%Y-%m-%d')
-                                            
-                                            # Determine which score corresponds to which team
-                                            home_score_index = 0 if game.Home == last_matchup_scores[0] else 1
-                                            away_score_index = 1 - home_score_index
-                                            
-                                            home_score = last_matchup_scores[home_score_index]
-                                            away_score = last_matchup_scores[away_score_index]
-                                            
-                                            st.write(f"Last matchup: {formatted_last_matchup_date}  -  {game.Visitor}: {away_score} vs {game.Home}: {home_score}")
-                                        else:
-                                            st.write("No matchups this season.")
-                                        col1, col2 = st.columns(2)
-
-                                        with col1:
-                                            st.write(f"{game.Home}:")
-
-                                            # Load the Excel file into a DataFrame
-                                            df = pd.read_excel(excel_file2, sheet_name=sheet_name2)
-
-                                            # Filter the DataFrame to get injured players
-                                            injured_players = df[df['injury'] > 14]
-                                        
-                                                                            
-                                            
-                                            # Filter the DataFrame to get injuries for the specific team
-                                            team_injuries = injured_players[injured_players['team1'] == game.Home]
-
-                                            notable_injuries = team_injuries['Player'].tolist()
-                                                                    
-                                            if notable_injuries:
-                                                injuries_string = ", ".join(notable_injuries)
-                                                st.write(f"Injuries:", injuries_string)
-                                            else:
-                                                st.write("No important injuries")
-                                            
-                                            # Check if the visitor team played yesterday
-                                            if not home_yesterday.empty:
-                                                st.write(f"{game.Home} played yesterday")
-                                            else:
-                                                pass
-
-                                        with col2:
-                                            st.write(f"{game.Visitor}:")
-
-                                            # Load the Excel file into a DataFrame
-                                            df = pd.read_excel(excel_file2, sheet_name=sheet_name2)
-
-                                            # Filter the DataFrame to get injured players
-                                            injured_players = df[df['injury'] > 14]
-
-                                            # Filter the DataFrame to get injuries for the specific team
-                                            team_injuries = injured_players[injured_players['team1'] == game.Visitor]
-
-                                            # Display notable injuries for the team
-                                            notable_injuries = team_injuries['Player'].tolist()
-                                            if notable_injuries:
-                                                injuries_string = ", ".join(notable_injuries)
-                                                st.write("Injuries:", injuries_string)
-                                            else:
-                                                st.write("No important injuries")
-                                            
-                                            # Check if the visitor team played yesterday
-                                            if not visitor_yesterday.empty:
-                                                st.write(f"{game.Visitor} played yesterday")
-                                            else:
-                                                pass
-
+                                
 
                             ##elif selected_method == 'American':
                                 ##st.subheader('Coming Soon - Decimal Only')
