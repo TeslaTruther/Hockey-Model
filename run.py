@@ -131,8 +131,10 @@ elif selection == '🏒 NHL Model':
                     home_team = row['home_team']
                     away_team = row['away_team']
                     commence_time_str = row['commence_time']
-                    # Assume commence_time is stored in UTC
-                    commence_time_utc = datetime.fromisoformat(commence_time_str).replace(tzinfo=pytz.utc)
+
+                    # Parse the commence_time_str into a datetime object
+                    commence_time_utc = datetime.fromisoformat(commence_time_str)
+
                     home_win_odds = row['home_win_odds']
                     away_win_odds = row['away_win_odds']
 
@@ -141,7 +143,7 @@ elif selection == '🏒 NHL Model':
                         nhl_odds[(home_team, away_team)] = {
                             'home_team': home_team,
                             'away_team': away_team,
-                            'commence_time': commence_time_utc,
+                            'commence_time': commence_time_utc,  # Use the parsed datetime object
                             'home_win_odds': home_win_odds,
                             'away_win_odds': away_win_odds,
                             # If 'over_odds', 'under_odds', 'total_line' are present in your table, include them here
