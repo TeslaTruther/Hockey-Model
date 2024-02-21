@@ -1,6 +1,7 @@
 import sqlite3
 from datetime import datetime
 import requests
+import time
 
 def print_database(conn):
     cursor = conn.cursor()
@@ -47,6 +48,7 @@ def fetch_and_insert_data():
                 home_team = game['home_team']
                 away_team = game['away_team']
                 commence_time = datetime.strptime(game['commence_time'], "%Y-%m-%dT%H:%M:%SZ")
+                commence_time_str = commence_time.strftime("%Y-%m-%d %H:%M:%S")  # Format commence time string
 
                 # Find bookmakers and their odds
                 bookmakers = game['bookmakers']
@@ -62,25 +64,18 @@ def fetch_and_insert_data():
                                 cursor.execute('''
                                     INSERT INTO odds_data (home_team, away_team, commence_time, bookmaker, home_win_odds, away_win_odds)
                                     VALUES (?, ?, ?, ?, ?, ?)
-                                ''', (home_team, away_team, commence_time, bookmaker['title'], home_win_odds, away_win_odds))
+                                ''', (home_team, away_team, commence_time_str, bookmaker['title'], home_win_odds, away_win_odds))
 
             # Save (commit) the changes
             conn.commit()
 
-            print("Data inserted successfully.")
-            
-
+            print_database(conn)
         else:
             print("No NHL odds found currently.")
-
     else:
         print("Request failed. Status code:", response.status_code)
 
     # Close the database connection
     conn.close()
 
-# Main loop to fetch data every 2 hours
-while True:
-    fetch_and_insert_data()
-    # Sleep for 2 hours
-    time.sleep(2 * 60 * 60)  # 2 hours in seconds
+fetch_and_insert_data()

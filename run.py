@@ -13,6 +13,7 @@ import requests
 from io import BytesIO
 from nba_api.stats.endpoints import leaguestandingsv3
 import sqlite3
+
 st.set_page_config(page_title="Quantum Odds", page_icon="🔒", layout="wide")
 
 hide_st_style = """
@@ -132,18 +133,15 @@ elif selection == '🏒 NHL Model':
                     away_team = row['away_team']
                     commence_time_str = row['commence_time']
 
-                    # Parse the commence_time_str into a datetime object
-                    commence_time_utc = datetime.fromisoformat(commence_time_str)
-
                     home_win_odds = row['home_win_odds']
                     away_win_odds = row['away_win_odds']
 
                     # Check if odds for the current game already exist and if they are more recent
-                    if (home_team, away_team) not in nhl_odds or nhl_odds[(home_team, away_team)]['commence_time'] < commence_time_utc:
+                    if (home_team, away_team) not in nhl_odds:
                         nhl_odds[(home_team, away_team)] = {
                             'home_team': home_team,
                             'away_team': away_team,
-                            'commence_time': commence_time_utc,  # Use the parsed datetime object
+                            'commence_time': commence_time_str,
                             'home_win_odds': home_win_odds,
                             'away_win_odds': away_win_odds,
                             # If 'over_odds', 'under_odds', 'total_line' are present in your table, include them here
@@ -260,7 +258,7 @@ elif selection == '🏒 NHL Model':
                             else:
                                 st.write('No odds found')
                                                             
-                                with st.expander('More Details', expanded=False):
+                            with st.expander('More Details', expanded=False):
                                             excel_file = 'nhl.xlsx'
                                             excel_file2 = 'nhlgar.xlsx'
                                             sheet_name = 'test'
