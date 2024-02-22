@@ -120,8 +120,8 @@ elif selection == '🏒 NHL Model':
             conn.row_factory = sqlite3.Row  # Set the row factory to return rows as dictionaries
             c = conn.cursor()
 
-            # Execute a SELECT query to fetch the most recent data from the 'odds_data' table
-            c.execute("SELECT * FROM odds_data ORDER BY commence_time DESC")
+            # Execute a SELECT query to fetch data from the 'odds_data' table without sorting
+            c.execute("SELECT * FROM odds_data")
             rows = c.fetchall()
 
             conn.close()
