@@ -1,7 +1,6 @@
-import sqlite3
 from datetime import datetime
 import requests
-import time
+import sqlite3
 
 def print_database(conn):
     cursor = conn.cursor()
@@ -9,15 +8,47 @@ def print_database(conn):
     rows = cursor.fetchall()
 
     if rows:
-      print("Database Contents:")
-      for row in rows:
-          print(row)
+        print("Database Contents:")
+        for row in rows:
+            print(row)
     else:
-      print("Database is currently empty.")
-# Function to fetch and insert data into the database
+        print("Database is currently empty.")
+def create_table():
+    # Connect to the database (creates 'nhldata.db' if it doesn't exist)
+    conn = sqlite3.connect('nhldata.db')
+    cursor = conn.cursor()
+
+    # Drop the odds_data table if it exists
+    cursor.execute('''DROP TABLE IF EXISTS odds_data''')
+
+    # Create the odds_data table with the specified schema
+    cursor.execute('''
+        CREATE TABLE odds_data (
+            id INTEGER PRIMARY KEY,
+            home_team TEXT,
+            away_team TEXT,
+            commence_time TEXT,
+            bookmaker TEXT,
+            home_win_odds REAL,
+            away_win_odds REAL,
+            total_number_goals REAL,
+            total_over_odds REAL,
+            total_under_odds REAL
+        )
+    ''')
+
+    # Commit and close the connection
+    conn.commit()
+    conn.close()
+
+
+
+
+
+
 def fetch_and_insert_data():
     # Connect to the database (creates 'mydata.db' if it doesn't exist)
-    conn = sqlite3.connect('mydata.db')
+    conn = sqlite3.connect('nhldata.db')
     cursor = conn.cursor()
 
     # Your Odds API key
@@ -30,7 +61,7 @@ def fetch_and_insert_data():
     params = {
         "apiKey": API_KEY,
         "regions": "us",  # Focus on US bookmakers
-        "markets": "h2h",  # Get moneyline odds
+        "markets": "h2h,totals",  # Get moneyline and totals odds
         "oddsFormat": "decimal"  # Request odds in decimal format
     }
 
@@ -43,7 +74,7 @@ def fetch_and_insert_data():
 
         # Check if any odds are found
         if data:
-            print("NHL Moneyline Odds:")
+            print("NHL Odds:")
             for game in data:
                 home_team = game['home_team']
                 away_team = game['away_team']
@@ -53,23 +84,36 @@ def fetch_and_insert_data():
                 # Find bookmakers and their odds
                 bookmakers = game['bookmakers']
                 for bookmaker in bookmakers:
-                    # Focus on moneyline markets (h2h) and FanDuel bookmaker
                     if bookmaker['title'] == 'FanDuel':
                         markets = bookmaker['markets']
+                        home_win_odds = None
+                        away_win_odds = None
+                        total_over_odds = None
+                        total_under_odds = None
+                        total_number_goals = None
                         for market in markets:
                             if market['key'] == 'h2h':
                                 home_win_odds = market['outcomes'][0]['price']
                                 away_win_odds = market['outcomes'][1]['price']
-                                # Insert data into the database
-                                cursor.execute('''
-                                    INSERT INTO odds_data (home_team, away_team, commence_time, bookmaker, home_win_odds, away_win_odds)
-                                    VALUES (?, ?, ?, ?, ?, ?)
-                                ''', (home_team, away_team, commence_time_str, bookmaker['title'], home_win_odds, away_win_odds))
+                            elif market['key'] == 'totals':
+                                outcomes = market['outcomes']
+                                for outcome in outcomes:
+                                    if outcome['name'] == 'Over':
+                                        total_over_odds = outcome['price']
+                                        total_number_goals = outcome['point']
+                                    elif outcome['name'] == 'Under':
+                                        total_under_odds = outcome['price']
+
+                        # Insert data into the database
+                        cursor.execute('''
+                            INSERT INTO odds_data (home_team, away_team, commence_time, bookmaker, home_win_odds, away_win_odds, total_number_goals, total_over_odds, total_under_odds)
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        ''', (home_team, away_team, commence_time_str, bookmaker['title'], home_win_odds, away_win_odds, total_number_goals, total_over_odds, total_under_odds))
 
             # Save (commit) the changes
             conn.commit()
 
-            print_database(conn)
+            
         else:
             print("No NHL odds found currently.")
     else:

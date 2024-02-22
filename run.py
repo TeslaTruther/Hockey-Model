@@ -116,7 +116,7 @@ elif selection == '🏒 NHL Model':
 
             return last_matchup_date, last_matchup_scores
         def get_nhl_odds_from_database():
-            conn = sqlite3.connect('mydata.db')
+            conn = sqlite3.connect('nhldata.db')
             conn.row_factory = sqlite3.Row  # Set the row factory to return rows as dictionaries
             c = conn.cursor()
 
@@ -125,32 +125,25 @@ elif selection == '🏒 NHL Model':
             rows = c.fetchall()
 
             conn.close()
-            
+
             if rows:
-                nhl_odds = {}
+                nhl_odds = []
                 for row in rows:
-                    home_team = row['home_team']
-                    away_team = row['away_team']
-                    commence_time_str = row['commence_time']
+                    game_odds = {
+                        'home_team': row['home_team'],
+                        'away_team': row['away_team'],
+                        'commence_time': row['commence_time'],
+                        'home_win_odds': row['home_win_odds'],
+                        'away_win_odds': row['away_win_odds'],
+                        'total_over_odds': row['total_over_odds'],  # Access over odds
+                        'total_under_odds': row['total_under_odds'],  # Access under odds
+                        'total_number_goals': row['total_number_goals']
+                    }
+                    nhl_odds.append(game_odds)
 
-                    home_win_odds = row['home_win_odds']
-                    away_win_odds = row['away_win_odds']
-
-                    # Check if odds for the current game already exist and if they are more recent
-                    if (home_team, away_team) not in nhl_odds:
-                        nhl_odds[(home_team, away_team)] = {
-                            'home_team': home_team,
-                            'away_team': away_team,
-                            'commence_time': commence_time_str,
-                            'home_win_odds': home_win_odds,
-                            'away_win_odds': away_win_odds,
-                            # If 'over_odds', 'under_odds', 'total_line' are present in your table, include them here
-                        }
-
-                return list(nhl_odds.values())
+                return nhl_odds
             else:
                 return None
-
 
         st.title('NHL Model 🏒 ')
         st.header("How the Model Works")
@@ -225,6 +218,7 @@ elif selection == '🏒 NHL Model':
                 if button_clicked:
                     nhl_odds = get_nhl_odds_from_database()
 
+
                     if nhl_odds:
                         st.write("### Today's Projected Odds:")
                         for i, game in enumerate(today_games.itertuples(), start=1):
@@ -257,6 +251,7 @@ elif selection == '🏒 NHL Model':
                                 st.write(f"{game.Home}: {odd_1}, {game.Visitor}: {odd_2}")
                             else:
                                 st.write('No odds found')
+
                                                             
                             with st.expander('More Details', expanded=False):
                                             excel_file = 'nhl.xlsx'
@@ -440,13 +435,12 @@ elif selection == '🏒 NHL Model':
                             if odds_found:
                                 st.write(f"{game.Home}: {odd_1}, {game.Visitor}: {odd_2}")
                             if not odds_found:
-                                with st.expander('More Details', expanded=False):
-                                    # Your expander content here
-                                    pass
-                            else:
+                                st.write('no odds')
+                            with st.expander('More Details', expanded=False):
+                                 
         
                                 
-                                with st.expander('More Details', expanded=False):
+                                
                                         excel_file = 'nhl.xlsx'
                                         excel_file2 = 'nhlgar.xlsx'
                                         sheet_name = 'test'
