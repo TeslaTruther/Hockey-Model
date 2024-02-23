@@ -147,7 +147,7 @@ elif selection == '🏒 NHL Model':
 
         st.title('NHL Model 🏒 ')
         st.header("How the Model Works")
-        st.write("The model generates odds from its projected probability of outcomes. Think of these odds as the minimum return you would require to make a positive EV bet.")
+        st.write("The model generates odds from its projected probability of outcomes. The 🔥 flags bets that the model believes has positvie EV. ")
         # Define a list of available methods for calculating odds
         ##calculation_methods = ['Decimal', 'American']
 
@@ -218,13 +218,13 @@ elif selection == '🏒 NHL Model':
                 if button_clicked:
                     nhl_odds = get_nhl_odds_from_database()
 
-
                     if nhl_odds:
                         st.write("### Today's Projected Odds:")
                         for i, game in enumerate(today_games.itertuples(), start=1):
                             odds_found = False
                             odd_1, odd_2 = None, None  # Initialize odd variables
-                                                                    
+                            over_fire, under_fire = "", ""  # Initialize fire emojis
+
                             for odds_game in nhl_odds:
                                 # Check if the odds correspond to the game's home and away teams
                                 home_team, away_team = odds_game['home_team'], odds_game['away_team']
@@ -234,23 +234,49 @@ elif selection == '🏒 NHL Model':
                                     odd_1, odd_2 = odds_game['away_win_odds'], odds_game['home_win_odds']
 
                                 if (home_team == game.Home and away_team == game.Visitor) or \
-                                (home_team == game.Visitor and away_team == game.Home):
+                                        (home_team == game.Visitor and away_team == game.Home):
                                     # If the odds match, assign them accordingly
                                     odds_found = True
                                     break
 
+                            if game.Constant is not None and odds_game['total_number_goals'] is not None:
+                                if game.Constant > odds_game['total_number_goals']:
+                                    if game.Totals_Probability['Over'] - odds_game['total_over_odds'] <= 0.15:
+                                        over_fire = " 🔥"  # Add fire emoji for over
+                                    else:
+                                        over_fire = ""  # Remove fire emoji for over if condition not met
+
+                                if game.Constant < odds_game['total_number_goals']:
+                                    if game.Totals_Probability['Under'] - odds_game['total_under_odds']  <= 0.15:
+                                        under_fire = " 🔥"  # Add fire emoji for under
+                                    else:
+                                        under_fire = ""  # Remove fire emoji for under if condition not met
+
+                                if game.Constant == odds_game['total_number_goals']:
+                                    over_fire, under_fire = "", ""  # Set fire emojis to empty if the totals are equal
+                            else:
+                                over_fire, under_fire = "", ""  # Set fire emojis to empty if any value is None
+
+
+                            # Determine if fire emoji should be added to projected odds
+                            home_fire = " 🔥" if odd_1 is not None and game.ML_Home_Decimal_Odds < (odd_1) - 0.15 else ""
+                            away_fire = " 🔥" if odd_2 is not None and game.ML_Away_Decimal_Odds < odd_2 - 0.15 else ""
+
                             st.subheader(f"{game.Visitor} *@* {game.Home}")
-                            st.write(f"{game.Home} | **Projected Odds:** {game.ML_Home_Decimal_Odds:.3f}" + (" 🔥" if odd_1 is not None and game.ML_Home_Decimal_Odds < (odd_1) - 0.15 else ""))
-                            st.write(f"{game.Visitor} | **Projected Odds:** {game.ML_Away_Decimal_Odds:.3f}" + (" 🔥" if odd_2 is not None and game.ML_Away_Decimal_Odds < odd_2 - 0.15 else ""))
+                            st.write(f"{game.Home} | **Projected Odds:** {game.ML_Home_Decimal_Odds:.3f}{home_fire}")
+                            st.write(f"{game.Visitor} | **Projected Odds:** {game.ML_Away_Decimal_Odds:.3f}{away_fire}")
                             st.write(f"Projected Over Under Line: {game.Constant:.1f}")
-                            st.write(f"**Over Under Odds:** Over: {game.Totals_Probability['Over']:.2f}, Under: {game.Totals_Probability['Under']:.2f}")
+                            st.write(f"Over: {game.Totals_Probability['Over']:.2f}{over_fire} /  Under: {game.Totals_Probability['Under']:.2f}{under_fire}")
 
                             # Write the Fandual odds
-                            st.write("### Fandual Odds:")
-                            if odds_found:
-                                st.write(f"{game.Home}: {odd_1}, {game.Visitor}: {odd_2}")
-                            else:
-                                st.write('No odds found')
+                            st.write("Fandual Odds:")
+                            st.write(f"{game.Home}: {odd_1}, {game.Visitor}: {odd_2}")
+                            # Include the total number of goals for the game
+                            st.write(f"Over Under Line: {odds_game['total_number_goals']}")
+                            st.write(f"Over: {odds_game['total_over_odds']}, Under: {odds_game['total_under_odds']}")
+                            if not odds_found:
+                                pass
+
 
                                                             
                             with st.expander('More Details', expanded=False):
@@ -406,36 +432,64 @@ elif selection == '🏒 NHL Model':
 
                     if nhl_odds:
                         st.write("### Tomorrow's Projected Odds:")
-                        for i, game in enumerate(tomorrow_games.itertuples(), start=1):
+                        for i, game in enumerate(tomorrow_games.itertuples(), start=1):  # Fix here: iterate through `tomorrow_games`
                             odds_found = False
                             odd_1, odd_2 = None, None  # Initialize odd variables
-                            
-                            # Find the odds for the current game
+                            over_fire, under_fire = "", ""  # Initialize fire emojis
+
                             for odds_game in nhl_odds:
                                 # Check if the odds correspond to the game's home and away teams
                                 home_team, away_team = odds_game['home_team'], odds_game['away_team']
+                                if home_team < away_team:
+                                    odd_1, odd_2 = odds_game['home_win_odds'], odds_game['away_win_odds']
+                                else:
+                                    odd_1, odd_2 = odds_game['away_win_odds'], odds_game['home_win_odds']
+
                                 if (home_team == game.Home and away_team == game.Visitor) or \
-                                (home_team == game.Visitor and away_team == game.Home):
+                                        (home_team == game.Visitor and away_team == game.Home):
                                     # If the odds match, assign them accordingly
-                                    if home_team < away_team:
-                                        odd_1, odd_2 = odds_game['home_win_odds'], odds_game['away_win_odds']
-                                    else:
-                                        odd_1, odd_2 = odds_game['away_win_odds'], odds_game['home_win_odds']
                                     odds_found = True
                                     break
 
+                            # Check if the conditions for fire emoji should be applied
+                            if game.Constant is not None and odds_game['total_number_goals'] is not None:
+                                if game.Constant > odds_game['total_number_goals']:
+                                    if game.Totals_Probability['Over'] - odds_game['total_over_odds'] <= 0.15:
+                                        over_fire = " 🔥"  # Add fire emoji for over
+                                    else:
+                                        over_fire = ""  # Remove fire emoji for over if condition not met
+
+                                elif game.Constant < odds_game['total_number_goals']:
+                                    if odds_game['total_under_odds'] - game.Totals_Probability['Under']  <= 0.15:
+                                        under_fire = " 🔥"  # Add fire emoji for under
+                                    else:
+                                        under_fire = ""  # Remove fire emoji for under if condition not met
+
+                                elif game.Constant == odds_game['total_number_goals']:
+                                    over_fire, under_fire = "", ""  # Set fire emojis to empty if the totals are equal
+
+                            else:
+                                over_fire, under_fire = "", ""  # Set fire emojis to empty if any value is None
+
+                            # Determine if fire emoji should be added to projected odds
+                            home_fire = " 🔥" if odd_1 is not None and game.ML_Home_Decimal_Odds < (odd_1) - 0.15 else ""
+                            away_fire = " 🔥" if odd_2 is not None and game.ML_Away_Decimal_Odds < odd_2 - 0.15 else ""
+
                             st.subheader(f"{game.Visitor} *@* {game.Home}")
-                            st.write(f"{game.Home} | **Projected Odds:** {game.ML_Home_Decimal_Odds:.3f}" + (" 🔥" if odd_1 is not None and game.ML_Home_Decimal_Odds < (odd_1) - 0.15 else ""))
-                            st.write(f"{game.Visitor} | **Projected Odds:** {game.ML_Away_Decimal_Odds:.3f}" + (" 🔥" if odd_2 is not None and game.ML_Away_Decimal_Odds < odd_2 - 0.15 else ""))
+                            st.write(f"{game.Home} | **Projected Odds:** {game.ML_Home_Decimal_Odds:.3f}{home_fire}")
+                            st.write(f"{game.Visitor} | **Projected Odds:** {game.ML_Away_Decimal_Odds:.3f}{away_fire}")
                             st.write(f"Projected Over Under Line: {game.Constant:.1f}")
-                            st.write(f"**Over Under Odds:** Over: {game.Totals_Probability['Over']:.2f}, Under: {game.Totals_Probability['Under']:.2f}")
+                            st.write(f"Over: {game.Totals_Probability['Over']:.2f}{over_fire} /  Under: {game.Totals_Probability['Under']:.2f}{under_fire}")
 
                             # Write the Fandual odds
-                            st.write("### Fandual Odds:")
-                            if odds_found:
-                                st.write(f"{game.Home}: {odd_1}, {game.Visitor}: {odd_2}")
+                            st.write("Fandual Odds:")
+                            st.write(f"{game.Home}: {odd_1}, {game.Visitor}: {odd_2}")
+                            # Include the total number of goals for the game
+                            st.write(f"Over Under Line: {odds_game['total_number_goals']}")
+                            st.write(f"Over: {odds_game['total_over_odds']}, Under: {odds_game['total_under_odds']}")
+
                             if not odds_found:
-                                st.write('no odds')
+                                pass
                             with st.expander('More Details', expanded=False):
                                  
         
@@ -647,10 +701,40 @@ elif selection == '🏒 NHL Model':
 elif selection == '🏀 NBA Model':
     st.title('NBA Model 🏀')
     st.header("How the Model Works")
-    st.write("The model generates odds from its projected probability of outcomes. Think of these odds as the minimum return you would require to make a positive EV bet.")
-    st.write("If a player is listed on the injury report as day-to-day the model will include them. The injury tab shows all injuries with details.")                               
+    st.write("The model generates odds from its projected probability of outcomes. The 🔥 flags bets the model believes are positive EV bets.")
+    st.write("NBA starting lineups are finicky. The model updates for injuries but if the player is not listed on drop down they are being included.")                               
     # Use a relative path to the Excel file
     excel_file = 'nba.xlsm'
+    def get_nba_odds_from_database():
+            conn = sqlite3.connect('nbadata.db')
+            conn.row_factory = sqlite3.Row  # Set the row factory to return rows as dictionaries
+            c = conn.cursor()
+
+            # Execute a SELECT query to fetch data from the 'odds_data' table without sorting
+            c.execute("SELECT * FROM odds_data")
+            rows = c.fetchall()
+
+            conn.close()
+
+            if rows:
+                nhl_odds = []
+                for row in rows:
+                    game_odds = {
+                        'home_team': row['home_team'],
+                        'away_team': row['away_team'],
+                        'commence_time': row['commence_time'],
+                        'home_win_odds': row['home_win_odds'],
+                        'away_win_odds': row['away_win_odds'],
+                        'total_over_odds': row['total_over_odds'],  # Access over odds
+                        'total_under_odds': row['total_under_odds'],  # Access under odds
+                        'total_number_goals': row['total_number_goals']
+                    }
+                    nhl_odds.append(game_odds)
+
+                return nhl_odds
+            else:
+                return None
+
 
     # Load data from "Game Data" sheet
     game_data = pd.read_excel(excel_file, sheet_name="2024schedule")
@@ -729,7 +813,7 @@ elif selection == '🏀 NBA Model':
 
 # Check if the button is clicked
             if button_clicked:
-
+                nba_odds = get_nba_odds_from_database()
         
                 @st.cache_data
                 def skipComputation(today_games):
@@ -785,11 +869,57 @@ elif selection == '🏀 NBA Model':
 
                 st.write("### Today's Projected Odds:")
                 for i, game in enumerate(today_games.itertuples(), start=1):
+                    odds_found = False
+                    odd_1, odd_2 = None, None  # Initialize odd variables
+                    
+
+                    for odds_game in nba_odds:
+                                # Check if the odds correspond to the game's home and away teams
+                        home_team, away_team = odds_game['home_team'], odds_game['away_team']
+                        if home_team < away_team:
+                                    odd_1, odd_2 = odds_game['home_win_odds'], odds_game['away_win_odds']
+                        else:
+                                    odd_1, odd_2 = odds_game['away_win_odds'], odds_game['home_win_odds']
+
+                        if (home_team == game.Home and away_team == game.Visitor) or \
+                                        (home_team == game.Visitor and away_team == game.Home):
+                                    # If the odds match, assign them accordingly
+                                    odds_found = True
+                                    break
+
+                    over_fire, under_fire = "", ""  # Initialize fire emojis
+                    if game.Constant - odds_game['total_number_goals'] > 5:
+                                over_fire = "🔥"  # Add fire emoji for over
+                                under_fire = ""  # Remove fire emoji for under
+                    elif game.Constant - odds_game['total_number_goals'] < -5:
+                                over_fire = ""  # Remove fire emoji for over
+                                under_fire = "🔥"  # Add fire emoji for under
+                    else:
+                                under_fire, over_fire = "", ""  # Remove fire emoji for both if condition not met
+
+
+
+                   
+
+                            # Determine if fire emoji should be added to projected odds
+                    home_fire = " 🔥" if odd_1 is not None and game.ML_Home_Decimal_Odds < (odd_1) - 0.15 else ""
+                    away_fire = " 🔥" if odd_2 is not None and game.ML_Away_Decimal_Odds < odd_2 - 0.15 else ""
+
                     st.subheader(f"{game.Visitor} *@* {game.Home}")
-                    st.write(f"{game.Home} | **Projected Odds:** {game.ML_Home_Decimal_Odds:.3f}")
-                    st.write(f"{game.Visitor} | **Projected Odds:** {game.ML_Away_Decimal_Odds:.3f}")
-                    st.write(f"Projected Over Under Line: {game.Constant:.1f}")            
-                    st.write(f"**Over Under Odds:** Over: {game.Totals_Probability['Over']:.2f}, Under: {game.Totals_Probability['Under']:.2f}")
+                    st.write(f"{game.Home} | **Projected Odds:** {game.ML_Home_Decimal_Odds:.3f}{home_fire}")
+                    st.write(f"{game.Visitor} | **Projected Odds:** {game.ML_Away_Decimal_Odds:.3f}{away_fire}")
+                    st.write(f"Projected Over Under Line: {game.Constant:.1f}")
+                    st.write(f"Over: {game.Totals_Probability['Over']:.2f}{over_fire} /  Under: {game.Totals_Probability['Under']:.2f}{under_fire}")
+
+                            # Write the Fandual odds
+                    st.write("Fandual Odds:")
+                    st.write(f"{game.Home}: {odd_1}, {game.Visitor}: {odd_2}")
+                            # Include the total number of goals for the game
+                    st.write(f"Over Under Line: {odds_game['total_number_goals']}")
+                    st.write(f"Over: {odds_game['total_over_odds']}, Under: {odds_game['total_under_odds']}")
+                    if not odds_found:
+                        pass
+           
             
             
                     # Display the expander button and its content
@@ -944,6 +1074,7 @@ elif selection == '🏀 NBA Model':
 
 # Check if the button is clicked
         if button_clicked:
+            nba_odds = get_nba_odds_from_database()
             # Calculate and display the over/under odds, implied probabilities, and projected scores based on the selected method
             # Calculate the projected Money Line odds
             tomorrow_games['Projected_Line'] = 0.4 * tomorrow_games['ml1'] + 0.6 * tomorrow_games['ml2'] + 0 * tomorrow_games['ml3']
@@ -993,143 +1124,184 @@ elif selection == '🏀 NBA Model':
             # Display tomorrow's games and projected odds
             st.write("### Tomorrow's Projected Odds:")
             for i, game in enumerate(tomorrow_games.itertuples(), start=1):
-                st.subheader(f"{game.Visitor} *@* {game.Home}")
-                st.write(f"{game.Home} | **Projected Odds:** {game.ML_Home_Decimal_Odds:.3f}")
-                st.write(f"{game.Visitor} | **Projected Odds:** {game.ML_Away_Decimal_Odds:.3f}")
-                st.write(f"Projected Over Under Line: {game.Constant:.1f}")            
-                st.write(f"**Over Under Odds:** Over: {game.Totals_Probability['Over']:.2f}, Under: {game.Totals_Probability['Under']:.2f}")
-                
-                # Create an expander for more details of each game
-                with st.expander(f"More Details for Game {i}", expanded=False):
-                    excel_file = 'nba.xlsm'
-                    sheet_name = '2024EPM'
+                    odds_found = False
+                    odd_1, odd_2 = None, None  # Initialize odd variables
                     
-                    # Check if either team played yesterday
-                    yesterday = datetime.now(time_zone).replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(days=1)
-                    yesterday_games = game_data[(game_data['Date'] >= yesterday) & (game_data['Date'] < yesterday + pd.DateOffset(1))]
-                    home_yesterday = yesterday_games[(yesterday_games['Home'] == game.Home) | (yesterday_games['Visitor'] == game.Home)]
-                    visitor_yesterday = yesterday_games[(yesterday_games['Home'] == game.Visitor) | (yesterday_games['Visitor'] == game.Visitor)]
-                    
-                    # Assuming find_last_matchup() returns last_matchup_date and last_matchup_scores as a tuple
-                    last_matchup_date, last_matchup_scores = find_last_matchup(game.Home, game.Visitor, game_data, today)
 
-                    if last_matchup_date:
-                        if last_matchup_date <= today:  # Check if the last matchup date is in the past or today
-                            formatted_last_matchup_date = last_matchup_date.strftime('%Y-%m-%d')
-                            
-                            # Determine which score corresponds to which team
-                            home_score_index = 0 if game.Home == last_matchup_scores[0] else 1
-                            away_score_index = 1 - home_score_index
-                            
-                            home_score = last_matchup_scores[home_score_index]
-                            away_score = last_matchup_scores[away_score_index]
-                            
-                            st.write(f"Last matchup: {formatted_last_matchup_date}  -  {game.Visitor}: {away_score} vs {game.Home}: {home_score}")
+                    for odds_game in nba_odds:
+                                # Check if the odds correspond to the game's home and away teams
+                        home_team, away_team = odds_game['home_team'], odds_game['away_team']
+                        if home_team < away_team:
+                                    odd_1, odd_2 = odds_game['home_win_odds'], odds_game['away_win_odds']
                         else:
-                            st.write("No matchups this season.")
+                                    odd_1, odd_2 = odds_game['away_win_odds'], odds_game['home_win_odds']
 
+                        if (home_team == game.Home and away_team == game.Visitor) or \
+                                        (home_team == game.Visitor and away_team == game.Home):
+                                    # If the odds match, assign them accordingly
+                                    odds_found = True
+                                    break
 
-                    
-                    # Create a two-column layout for displaying team injuries
+                    over_fire, under_fire = "", ""  # Initialize fire emojis
+                    if game.Constant - odds_game['total_number_goals'] > 4:
+                                over_fire = "🔥"  # Add fire emoji for over
+                                under_fire = ""  # Remove fire emoji for under
+                    elif game.Constant - odds_game['total_number_goals'] < -4:
+                                over_fire = ""  # Remove fire emoji for over
+                                under_fire = "🔥"  # Add fire emoji for under
+                    else:
+                                under_fire, over_fire = "", ""  # Remove fire emoji for both if condition not met
 
-                    col1, col2 = st.columns(2)
-                    with col1:
-                            st.subheader(f"{game.Home}:")
-                            # Load the Excel file into a DataFrame
-                            df = pd.read_excel(excel_file, sheet_name=sheet_name)
-                            # Filter the DataFrame to get injured players
-                            injured_players = df[df['missing'] > 20]
-                            # Filter the DataFrame to get injuries for the specific team
-                            team_injuries = injured_players[injured_players['team1'] == game.Home]
-                            # Display notable injuries for the team
-                            notable_injuries = team_injuries['name'].tolist()
-                            if notable_injuries:
-                                injuries_string = ", ".join(notable_injuries)
-                                st.write(f"Injuries:", injuries_string)
+                            # Determine if fire emoji should be added to projected odds
+                    home_fire = " 🔥" if odd_1 is not None and game.ML_Home_Decimal_Odds < (odd_1) - 0.15 else ""
+                    away_fire = " 🔥" if odd_2 is not None and game.ML_Away_Decimal_Odds < odd_2 - 0.15 else ""
+
+                    st.subheader(f"{game.Visitor} *@* {game.Home}")
+                    st.write(f"{game.Home} | **Projected Odds:** {game.ML_Home_Decimal_Odds:.3f}{home_fire}")
+                    st.write(f"{game.Visitor} | **Projected Odds:** {game.ML_Away_Decimal_Odds:.3f}{away_fire}")
+                    st.write(f"Projected Over Under Line: {game.Constant:.1f}")
+                    st.write(f"Over: {game.Totals_Probability['Over']:.2f}{over_fire} /  Under: {game.Totals_Probability['Under']:.2f}{under_fire}")
+
+                            # Write the Fandual odds
+                    st.write("Fandual Odds:")
+                    st.write(f"{game.Home}: {odd_1}, {game.Visitor}: {odd_2}")
+                            # Include the total number of goals for the game
+                    st.write(f"Over Under Line: {odds_game['total_number_goals']}")
+                    st.write(f"Over: {odds_game['total_over_odds']}, Under: {odds_game['total_under_odds']}")
+
+                    if not odds_found:
+                        pass
+                # Create an expander for more details of each game
+                    with st.expander(f"More Details for Game {i}", expanded=False):
+                        excel_file = 'nba.xlsm'
+                        sheet_name = '2024EPM'
+                        
+                        # Check if either team played yesterday
+                        yesterday = datetime.now(time_zone).replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(days=1)
+                        yesterday_games = game_data[(game_data['Date'] >= yesterday) & (game_data['Date'] < yesterday + pd.DateOffset(1))]
+                        home_yesterday = yesterday_games[(yesterday_games['Home'] == game.Home) | (yesterday_games['Visitor'] == game.Home)]
+                        visitor_yesterday = yesterday_games[(yesterday_games['Home'] == game.Visitor) | (yesterday_games['Visitor'] == game.Visitor)]
+                        
+                        # Assuming find_last_matchup() returns last_matchup_date and last_matchup_scores as a tuple
+                        last_matchup_date, last_matchup_scores = find_last_matchup(game.Home, game.Visitor, game_data, today)
+
+                        if last_matchup_date:
+                            if last_matchup_date <= today:  # Check if the last matchup date is in the past or today
+                                formatted_last_matchup_date = last_matchup_date.strftime('%Y-%m-%d')
+                                
+                                # Determine which score corresponds to which team
+                                home_score_index = 0 if game.Home == last_matchup_scores[0] else 1
+                                away_score_index = 1 - home_score_index
+                                
+                                home_score = last_matchup_scores[home_score_index]
+                                away_score = last_matchup_scores[away_score_index]
+                                
+                                st.write(f"Last matchup: {formatted_last_matchup_date}  -  {game.Visitor}: {away_score} vs {game.Home}: {home_score}")
                             else:
-                                st.write("No important injuries")
+                                st.write("No matchups this season.")
 
-                            standings_df['Combined'] = standings_df['TeamCity'] + " " + standings_df['TeamName']
-                            home_team_data = standings_df[standings_df['Combined'] == game.Home]  
-                            
-                            l10_home = home_team_data['L10'].iloc[0]
-                            last10home_home = home_team_data['Last10Home'].iloc[0]
-                            last10road_home = home_team_data['Last10Road'].iloc[0]
 
-                                    # Calculate last 10 win percentage 
-                            wins_last_10 = int(l10_home.split('-')[0])  
-                            last_10_win_pct = wins_last_10 / 10   
+                        
+                        # Create a two-column layout for displaying team injuries
 
-                                    # Get overall win percentage
-                            overall_win_pct = home_team_data['WinPCT'].iloc[0]
+                        col1, col2 = st.columns(2)
+                        with col1:
+                                st.subheader(f"{game.Home}:")
+                                # Load the Excel file into a DataFrame
+                                df = pd.read_excel(excel_file, sheet_name=sheet_name)
+                                # Filter the DataFrame to get injured players
+                                injured_players = df[df['missing'] > 20]
+                                # Filter the DataFrame to get injuries for the specific team
+                                team_injuries = injured_players[injured_players['team1'] == game.Home]
+                                # Display notable injuries for the team
+                                notable_injuries = team_injuries['name'].tolist()
+                                if notable_injuries:
+                                    injuries_string = ", ".join(notable_injuries)
+                                    st.write(f"Injuries:", injuries_string)
+                                else:
+                                    st.write("No important injuries")
 
-                                    # Determine emoji with threshold
-                            threshold = 0.2
-                            if last_10_win_pct >= overall_win_pct + threshold: 
-                                        emoji = "🔥" 
-                            elif last_10_win_pct <= overall_win_pct - threshold:
-                                        emoji = "🥶"  # Cold emoji 
-                            else:
-                                        emoji = "➖"  # No emoji if within the threshold
+                                standings_df['Combined'] = standings_df['TeamCity'] + " " + standings_df['TeamName']
+                                home_team_data = standings_df[standings_df['Combined'] == game.Home]  
+                                
+                                l10_home = home_team_data['L10'].iloc[0]
+                                last10home_home = home_team_data['Last10Home'].iloc[0]
+                                last10road_home = home_team_data['Last10Road'].iloc[0]
 
-                                    # Display with emoji
-                            st.write(f" * Last 10: {l10_home} / Last 10 Home: {last10road_home} / Recent Trend: {emoji}")  
-                                    
-                                # Check if the home team played yesterday
-                            if game.Home in today_games['Home'].values or game.Home in today_games['Visitor'].values:
-                                st.write(f"{game.Home} back-to-back game")
-                            else :
-                                pass
-                    
-                    with col2:
-                            st.subheader(f"{game.Visitor}:")
-                            # Load the Excel file into a DataFrame
-                            df = pd.read_excel(excel_file, sheet_name=sheet_name)
-                            # Filter the DataFrame to get injured players
-                            injured_players = df[df['missing'] > 20]
-                            # Filter the DataFrame to get injuries for the specific team
-                            team_injuries = injured_players[injured_players['team1'] == game.Visitor]
-                            # Display notable injuries for the team
-                            notable_injuries = team_injuries['name'].tolist()
-                            if notable_injuries:
-                                injuries_string = ", ".join(notable_injuries)
-                                st.write("Injuries:", injuries_string)
-                            else:
-                                st.write("No important injuries")
-                                                      
-                            vis_team_data = standings_df[standings_df['Combined'] == game.Visitor]
+                                        # Calculate last 10 win percentage 
+                                wins_last_10 = int(l10_home.split('-')[0])  
+                                last_10_win_pct = wins_last_10 / 10   
 
-                            
-                            l10_vis = vis_team_data['L10'].iloc[0]
-                            last10road_vis = vis_team_data['Last10Road'].iloc[0]
+                                        # Get overall win percentage
+                                overall_win_pct = home_team_data['WinPCT'].iloc[0]
 
-                                # Calculate last 10 win percentage for the visitor
-                            wins_last_10_vis = int(l10_vis.split('-')[0])  
-                            last_10_win_pct_vis = wins_last_10_vis / 10   
+                                        # Determine emoji with threshold
+                                threshold = 0.2
+                                if last_10_win_pct >= overall_win_pct + threshold: 
+                                            emoji = "🔥" 
+                                elif last_10_win_pct <= overall_win_pct - threshold:
+                                            emoji = "🥶"  # Cold emoji 
+                                else:
+                                            emoji = "➖"  # No emoji if within the threshold
 
-                                # Get overall win percentage for the visitor
-                            overall_win_pct_vis = vis_team_data['WinPCT'].iloc[0]
+                                        # Display with emoji
+                                st.write(f" * Last 10: {l10_home} / Last 10 Home: {last10road_home} / Recent Trend: {emoji}")  
+                                        
+                                    # Check if the home team played yesterday
+                                if game.Home in today_games['Home'].values or game.Home in today_games['Visitor'].values:
+                                    st.write(f"{game.Home} back-to-back game")
+                                else :
+                                    pass
+                        
+                        with col2:
+                                st.subheader(f"{game.Visitor}:")
+                                # Load the Excel file into a DataFrame
+                                df = pd.read_excel(excel_file, sheet_name=sheet_name)
+                                # Filter the DataFrame to get injured players
+                                injured_players = df[df['missing'] > 20]
+                                # Filter the DataFrame to get injuries for the specific team
+                                team_injuries = injured_players[injured_players['team1'] == game.Visitor]
+                                # Display notable injuries for the team
+                                notable_injuries = team_injuries['name'].tolist()
+                                if notable_injuries:
+                                    injuries_string = ", ".join(notable_injuries)
+                                    st.write("Injuries:", injuries_string)
+                                else:
+                                    st.write("No important injuries")
+                                                        
+                                vis_team_data = standings_df[standings_df['Combined'] == game.Visitor]
 
-                                # Determine emoji with threshold for the visitor
-                            threshold = 0.2
-                            if last_10_win_pct_vis >= overall_win_pct_vis + threshold: 
-                                    emoji_vis = "🔥" 
-                            elif last_10_win_pct_vis <= overall_win_pct_vis - threshold:
-                                    emoji_vis = "🥶"  # Cold emoji 
-                            else:
-                                    emoji_vis = "➖" 
+                                
+                                l10_vis = vis_team_data['L10'].iloc[0]
+                                last10road_vis = vis_team_data['Last10Road'].iloc[0]
 
-                                # Display stats for the visitor 
-                            st.write(f" * Last 10: {l10_vis} / Last 10 Away: {last10road_vis} / Recent Trend: {emoji_vis}") 
+                                    # Calculate last 10 win percentage for the visitor
+                                wins_last_10_vis = int(l10_vis.split('-')[0])  
+                                last_10_win_pct_vis = wins_last_10_vis / 10   
 
-                       
+                                    # Get overall win percentage for the visitor
+                                overall_win_pct_vis = vis_team_data['WinPCT'].iloc[0]
 
-                            # Check if the visitor team played yesterday
-                            if game.Visitor in today_games['Home'].values or game.Visitor in today_games['Visitor'].values:
-                                st.write(f"{game.Visitor} back-to-back game")
-                            else:
-                                pass
-                                                    
+                                    # Determine emoji with threshold for the visitor
+                                threshold = 0.2
+                                if last_10_win_pct_vis >= overall_win_pct_vis + threshold: 
+                                        emoji_vis = "🔥" 
+                                elif last_10_win_pct_vis <= overall_win_pct_vis - threshold:
+                                        emoji_vis = "🥶"  # Cold emoji 
+                                else:
+                                        emoji_vis = "➖" 
+
+                                    # Display stats for the visitor 
+                                st.write(f" * Last 10: {l10_vis} / Last 10 Away: {last10road_vis} / Recent Trend: {emoji_vis}") 
+
+                        
+
+                                # Check if the visitor team played yesterday
+                                if game.Visitor in today_games['Home'].values or game.Visitor in today_games['Visitor'].values:
+                                    st.write(f"{game.Visitor} back-to-back game")
+                                else:
+                                    pass
+                                                        
 
 
 
