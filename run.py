@@ -147,7 +147,7 @@ elif selection == '🏒 NHL Model':
 
         st.title('NHL Model 🏒 ')
         st.header("How the Model Works")
-        st.write("The model generates odds from its projected probability of outcomes. The 🔥 flags bets that the model believes has positvie EV. ")
+        st.write("The model generates odds from its projected probability of outcomes. The 🔥 flags bets the model projects to have positvie EV. ")
         # Define a list of available methods for calculating odds
         ##calculation_methods = ['Decimal', 'American']
 
@@ -1468,7 +1468,7 @@ elif selection == '🔑 Betting Strategy':
     tab1, tab2, tab3= st.tabs(["Overview", "Expected Value", "Varience"])
     with tab1:
             st.title('Strategy 🔑')
-            st.write('Our goal at Quantum Odds is to make our clients money. To make money gambling, you need relentless discipline and a strategy with an edge. The sports betting market is generally efficient and set up for you to lose (like all gambling). Lines are priced to the sportsbook’s implied probabilities, making every bet have an expected return of zero. After rake, every bet has negative expected return, explaining why most people lose. However, bettors have one strategic advantage over sportsbooks: flexibility. Sportsbooks need to post lines every day for every game in every sport and will eventually post a non-competitive line. Profitable bettors shop the market for these mistakes. Below is a step-by-step guide for how Quantum Odds will help you generate an edge.')            
+            st.write('To make money gambling, you need relentless discipline and a strategy with an edge. The sports betting market is generally efficient and set up for you to lose (like all gambling). Lines are priced to the sportsbook’s implied probabilities, making every bet have an expected return of zero. After rake, every bet has negative expected return, explaining why most people lose. However, bettors have one strategic advantage over sportsbooks: flexibility. Sportsbooks need to post lines every day for every game in every sport and will eventually post a non-competitive line. Profitable bettors shop the market for these mistakes. Below is a step-by-step guide for how Quantum Odds will help you generate an edge.')            
             st.subheader('Data Models')
             st.write('The first step to our strategy is to generate odds before they are released. Using statistics and machine learning, we crunch real time player and team data to produce our lines. Our data models produce lines the same way sportsbooks do. Having lines ready before the sportsbook is crucial to allowing you to find inefficiencies quickly.')
             st.subheader('Speed and Sportsbook Selection')   
