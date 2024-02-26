@@ -1481,10 +1481,22 @@ elif selection == '🔑 Betting Strategy':
             st.write('2. Don’t bet for the sake of betting - no inefficiencies no bet')
             st.write('3. Understand variance and how it impacts your returns')
     with tab2:
-        st.title('What is Expected Value')
+        st.title('Expected Value')
+        st.write('Expected value is the long-run average outcome of a probability event. To calculate expected value, you sum the probability of outcomes multiplied by the payoff of those specific outcomes. This sounds complex but the formula is quite simple:')
+        st.write(' EV = (probability of event) * (payoff of event)')                            
+        st.write(' For an example, imagine a game in which the outcome is 50/50, a complete coin flip. Most sportsbooks would give you a line of 1.9 (-110) for both sides. The EV equation can be shown below assuming a 10-dollar bet:')                            
+        st.write('EV = (0.5) * (10 * 1.9) = 9.5')      
+        st.write('Therefore betting $10 on a coin flip will lose you 50 cents on average at a sportsbook. Now imagine an example of an outcome that is expected to happen 75% of the time. Sportsbooks would give you a line  of 1.26 (-385) for the favorite and 3.8 (+280) for the dog. See below:') 
+        st.write(' EV = (0.75) * (10 * 1.26) = 9.5 and the other side EV = (0.25) * (10 * 3.8) = 9.5')  
+        st.write('The sportsbook goal is to create lines were both outcomes are slightly unprofitable. At Quantum Odds, we use this math to find inefficient lines. For example, imagine the Warriors are playing the Lakers. Using our regression models, we calculate that the Warriors will win 62% of the time meaning the Lakers will win 38%. Our model will automatically calculate the minimum odds required to make your money back:')
+        st.write(' Warriors = (0.62) * (10 * Breakeven Line) = (10), Lakers = (0.38) * (10 * Breakeven Line) = (10). Solving the equations, the breakeven line is: Warriors - 1.61 and Lakers – 2.63')
+        st.write('Now you need to compare these lines to your sportsbook. If the given lines are: Warriors  (1.54) and Lakers  (2.95). So you would bet on the Lakers as it would be positive EV. Shown here: EV = (0.38) * (10 * 2.95) = 11.21.')  
+        st.write('For every 10 dollars wagered you would gain $1.21 on average, a positive EV and a good bet.')
 
     with tab3:
-        st.title('Varience in Gambling')
+        st.title('Varience')
+        st.write("Variance is the concept that luck plays a significant role in games of chance over the short term. Even when you have an edge, you won't always win in any single event or day. Understanding variance is important in all forms of gambling for the following reasons: Bankroll Management: You need to have an adequate bankroll to weather the inevitable upswings and downswings of sports gambling. Mental Game: Accepting variance helps reduce frustration. A bad day doesn't mean you're a bad bettor or that you made bad bets. Focusing on the Long-Term: Variance emphasizes the importance of judging your success over a large sample size of bets, not on individual results. Professional gamblers focus on putting themselves in as many positive EV situations as possible and then let the math play itself out. Variance is like 'noise' in the short term, but over the long run, skill, and smart decision-making will prevail.")
+
 
 elif selection == '💲Performance Tracking':
     # Define functions
