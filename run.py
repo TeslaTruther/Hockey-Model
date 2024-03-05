@@ -65,14 +65,14 @@ selection = st.sidebar.radio('Quantum Odds 	✅', ['🏠 Home','🏀 NBA Model',
 if selection == '🏠 Home':
     # Main content
     st.title("Quantum Odds 	(beta)")
-    st.write("We build predictive sports models so you can compete against sportsbooks.")
+    st.write("We build predictive models so you can compete against sportsbooks.")
     st.write("Identify market inefficiencies and make positive expected value bets.")   
      
     st.image(resized_pandas[0])  
 
     st.write('This beta will showcase our NBA and NHL models while we develop our new site.')  
 
-    st.write('Follow us on instagram for updates and more content: (https://www.instagram.com/quantumodds/)')
+    st.write('Follow us on instagram for updates and more content: https://www.instagram.com/quantumodds/')
 
 
  
@@ -123,7 +123,7 @@ elif selection == '🏒 NHL Model':
         st.title('NHL Model 🏒 ')
         st.header("How the Model Works")
         st.write("Think of these odds as the minimum return you would require to make a good bet.")
-        st.write("The real edge is created by comparing these models to your own insight to make quick data driven decisions.")
+        st.write("The real edge is created by using these models alongside your own insight to make quick data driven decisions.")
         
         # Define a list of available methods for calculating odds
         ##calculation_methods = ['Decimal', 'American']
@@ -581,7 +581,7 @@ elif selection == '🏀 NBA Model':
     st.title('NBA Model 🏀')
     st.header("How the Model Works")
     st.write("Think of these odds as the minimum return you would require to make a good bet.")
-    st.write("The real edge is created by comparing these models to your own insight to make quick data driven decisions.")                              
+    st.write("The real edge is created by using these models alongside your own insight to make quick data driven decisions.")                              
     # Use a relative path to the Excel file
     excel_file = 'nba.xlsm'
 
