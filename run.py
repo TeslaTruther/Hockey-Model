@@ -1169,7 +1169,11 @@ elif selection == '🏀 NBA Model':
 elif selection == '🔑 Betting Strategy':
     
         st.title('Strategy 🔑')
-        st.write('To make money gambling, you need relentless discipline and a strategy with an edge. The sports betting market is generally efficient and set up for you to lose (like all gambling). Lines are priced to the sportsbook’s implied probabilities, making every bet have an expected return of zero. After rake, every bet has negative expected return, explaining why most people lose. However, bettors have one strategic advantage over sportsbooks: flexibility. Sportsbooks need to post lines every day for every game in every sport and will eventually post a non-competitive line. Profitable bettors shop the market for these mistakes. Below is a step-by-step guide for how Quantum Odds will help you generate an edge.')            
+        st.write('To make money gambling, you need relentless discipline and a strategy with an edge. The sports betting market is generally efficient and set up for you to lose (like all gambling). Lines are priced to the sportsbook’s implied probabilities, making every bet have an expected return of zero. After including rake, every bet has negative expected return, explaining why most people lose.') 
+        st.subheader('So Why Do We Do It?') 
+        st.write('Gambling on sports is fun as fuck. Coming home from work with a full slate of bets knowing the lines are in your favour is absolutely deadly.') 
+        st.subheader('So How Do You Find An Edge?')
+        st.write('Sports bettors have one strategic advantage over sportsbooks: flexibility. Sportsbooks need to post lines every day for every game in every sport and will eventually post a non-competitive line. Profitable bettors shop the market for these mistakes. Below is a step-by-step guide for how Quantum Odds will help you generate an edge.')            
         st.subheader('Data Models')
         st.write('The first step to our strategy is to generate odds before they are released. Using statistics and machine learning, we crunch real-time player and team data to produce our lines. Our data models produce lines the same way sportsbooks do. Having lines ready before the sportsbook is crucial to allowing you to find inefficiencies quickly.')
         st.subheader('Speed and Sportsbook Selection')   
