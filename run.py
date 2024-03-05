@@ -1171,7 +1171,7 @@ elif selection == '🔑 Betting Strategy':
         st.title('Strategy 🔑')
         st.write('To make money gambling, you need relentless discipline and a strategy with an edge. The sports betting market is generally efficient and set up for you to lose (like all gambling). Lines are priced to the sportsbook’s implied probabilities, making every bet have an expected return of zero. After including rake, every bet has negative expected return, explaining why most people lose.') 
         st.subheader('So Why Do We Do It?') 
-        st.write('Gambling on sports is fun as fuck. Coming home from work with a full slate of bets knowing the lines are in your favour is absolutely deadly.') 
+        st.write('Gambling on sports is simply fun as fuck. Coming home from work with a full slate of bets knowing the lines are in your favour is absolutely deadly.') 
         st.subheader('So How Do You Find An Edge?')
         st.write('Sports bettors have one strategic advantage over sportsbooks: flexibility. Sportsbooks need to post lines every day for every game in every sport and will eventually post a non-competitive line. Profitable bettors shop the market for these mistakes. Below is a step-by-step guide for how Quantum Odds will help you generate an edge.')            
         st.subheader('Data Models')
