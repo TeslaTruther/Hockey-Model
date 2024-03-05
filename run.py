@@ -59,17 +59,20 @@ time_zone = pytz.timezone('America/Los_Angeles')
 nhl_odds = None
 
 # Sidebar with a smaller width
-selection = st.sidebar.radio('Quantum Odds 	✅', ['🏠 Home','🏀 NBA Model','🏀 NBA Franchise Mode', '🏒 NHL Model', '🔑 Betting Strategy', '💲Performance Tracking'])
+selection = st.sidebar.radio('Quantum Odds 	✅', ['🏠 Home','🏀 NBA Model', '🏒 NHL Model', '🔑 Betting Strategy'])
 
 
 if selection == '🏠 Home':
     # Main content
-    st.title("Quantum Odds 	✅")
-    st.write("We generate odds so you can compete against sportsbooks.")
-    st.write("Find inefficient markets and make positive expected value bets.")   
+    st.title("Quantum Odds 	(beta)")
+    st.write("We build predictive sports models so you can compete against sportsbooks.")
+    st.write("Identify market inefficiencies and make positive expected value bets.")   
      
-    st.image(resized_pandas[0])    
+    st.image(resized_pandas[0])  
 
+    st.write('This beta will showcase our NBA and NHL models while we develop our new site.')  
+
+    st.write('Follow us on instagram for updates and more content: (https://www.instagram.com/quantumodds/)')
 
 
  
@@ -115,39 +118,13 @@ elif selection == '🏒 NHL Model':
                             break  # Break out of the loop after finding the last matchup
 
             return last_matchup_date, last_matchup_scores
-        def get_nhl_odds_from_database():
-            conn = sqlite3.connect('nhldata.db')
-            conn.row_factory = sqlite3.Row  # Set the row factory to return rows as dictionaries
-            c = conn.cursor()
 
-            # Execute a SELECT query to fetch data from the 'odds_data' table without sorting
-            c.execute("SELECT * FROM odds_data")
-            rows = c.fetchall()
-
-            conn.close()
-
-            if rows:
-                nhl_odds = []
-                for row in rows:
-                    game_odds = {
-                        'home_team': row['home_team'],
-                        'away_team': row['away_team'],
-                        'commence_time': row['commence_time'],
-                        'home_win_odds': row['home_win_odds'],
-                        'away_win_odds': row['away_win_odds'],
-                        'total_over_odds': row['total_over_odds'],  # Access over odds
-                        'total_under_odds': row['total_under_odds'],  # Access under odds
-                        'total_number_goals': row['total_number_goals']
-                    }
-                    nhl_odds.append(game_odds)
-
-                return nhl_odds
-            else:
-                return None
 
         st.title('NHL Model 🏒 ')
         st.header("How the Model Works")
-        st.write("The model generates odds from its projected probability of outcomes. The 🔥 flags bets the model projects to have positvie EV. ")
+        st.write("Think of these odds as the minimum return you would require to make a good bet.")
+        st.write("The real edge is created by comparing these models to your own insight to make quick data driven decisions.")
+        
         # Define a list of available methods for calculating odds
         ##calculation_methods = ['Decimal', 'American']
 
@@ -216,66 +193,18 @@ elif selection == '🏒 NHL Model':
                 button_clicked = st.button("Generate Today's Odds")
 
                 if button_clicked:
-                    nhl_odds = get_nhl_odds_from_database()
+                    
 
-                    if nhl_odds:
+                    
                         st.write("### Today's Projected Odds:")
                         for i, game in enumerate(today_games.itertuples(), start=1):
-                            odds_found = False
-                            odd_1, odd_2 = None, None  # Initialize odd variables
-                            over_fire, under_fire = "", ""  # Initialize fire emojis
-
-                            for odds_game in nhl_odds:
-                                # Check if the odds correspond to the game's home and away teams
-                                home_team, away_team = odds_game['home_team'], odds_game['away_team']
-                                if home_team < away_team:
-                                    odd_1, odd_2 = odds_game['home_win_odds'], odds_game['away_win_odds']
-                                else:
-                                    odd_1, odd_2 = odds_game['away_win_odds'], odds_game['home_win_odds']
-
-                                if (home_team == game.Home and away_team == game.Visitor) or \
-                                        (home_team == game.Visitor and away_team == game.Home):
-                                    # If the odds match, assign them accordingly
-                                    odds_found = True
-                                    break
-
-                            if game.Constant is not None and odds_game['total_number_goals'] is not None:
-                                if game.Constant > odds_game['total_number_goals']:
-                                    if game.Totals_Probability['Over'] - odds_game['total_over_odds'] <= 0.15:
-                                        over_fire = " 🔥"  # Add fire emoji for over
-                                    else:
-                                        over_fire = ""  # Remove fire emoji for over if condition not met
-
-                                if game.Constant < odds_game['total_number_goals']:
-                                    if game.Totals_Probability['Under'] - odds_game['total_under_odds']  <= 0.15:
-                                        under_fire = " 🔥"  # Add fire emoji for under
-                                    else:
-                                        under_fire = ""  # Remove fire emoji for under if condition not met
-
-                                if game.Constant == odds_game['total_number_goals']:
-                                    over_fire, under_fire = "", ""  # Set fire emojis to empty if the totals are equal
-                            else:
-                                over_fire, under_fire = "", ""  # Set fire emojis to empty if any value is None
 
 
-                            # Determine if fire emoji should be added to projected odds
-                            home_fire = " 🔥" if odd_1 is not None and game.ML_Home_Decimal_Odds < (odd_1) - 0.15 else ""
-                            away_fire = " 🔥" if odd_2 is not None and game.ML_Away_Decimal_Odds < odd_2 - 0.15 else ""
+
 
                             st.subheader(f"{game.Visitor} *@* {game.Home}")
-                            st.write(f"{game.Home} | **Projected Odds:** {game.ML_Home_Decimal_Odds:.3f}{home_fire}")
-                            st.write(f"{game.Visitor} | **Projected Odds:** {game.ML_Away_Decimal_Odds:.3f}{away_fire}")
-                            st.write(f"Projected Over Under Line: {game.Constant:.1f}")
-                            st.write(f"Over: {game.Totals_Probability['Over']:.2f}{over_fire} /  Under: {game.Totals_Probability['Under']:.2f}{under_fire}")
-
-                            # Write the Fandual odds
-                            st.write("Fandual Odds:")
-                            st.write(f"{game.Home}: {odd_1}, {game.Visitor}: {odd_2}")
-                            # Include the total number of goals for the game
-                            st.write(f"Over Under Line: {odds_game['total_number_goals']}")
-                            st.write(f"Over: {odds_game['total_over_odds']}, Under: {odds_game['total_under_odds']}")
-                            if not odds_found:
-                                pass
+                            st.write(f"{game.Home} | **Projected Odds:** {game.ML_Home_Decimal_Odds:.3f}")
+                            st.write(f"{game.Visitor} | **Projected Odds:** {game.ML_Away_Decimal_Odds:.3f}")
 
 
                                                             
@@ -428,68 +357,19 @@ elif selection == '🏒 NHL Model':
 
                 button_clicked = st.button("Generate Tomorrow's Odds")
                 if button_clicked:
-                    nhl_odds = get_nhl_odds_from_database()
+                    
 
-                    if nhl_odds:
+                    
                         st.write("### Tomorrow's Projected Odds:")
                         for i, game in enumerate(tomorrow_games.itertuples(), start=1):  # Fix here: iterate through `tomorrow_games`
-                            odds_found = False
-                            odd_1, odd_2 = None, None  # Initialize odd variables
-                            over_fire, under_fire = "", ""  # Initialize fire emojis
+                            
 
-                            for odds_game in nhl_odds:
-                                # Check if the odds correspond to the game's home and away teams
-                                home_team, away_team = odds_game['home_team'], odds_game['away_team']
-                                if home_team < away_team:
-                                    odd_1, odd_2 = odds_game['home_win_odds'], odds_game['away_win_odds']
-                                else:
-                                    odd_1, odd_2 = odds_game['away_win_odds'], odds_game['home_win_odds']
-
-                                if (home_team == game.Home and away_team == game.Visitor) or \
-                                        (home_team == game.Visitor and away_team == game.Home):
-                                    # If the odds match, assign them accordingly
-                                    odds_found = True
-                                    break
-
-                            # Check if the conditions for fire emoji should be applied
-                            if game.Constant is not None and odds_game['total_number_goals'] is not None:
-                                if game.Constant > odds_game['total_number_goals']:
-                                    if game.Totals_Probability['Over'] - odds_game['total_over_odds'] <= 0.15:
-                                        over_fire = " 🔥"  # Add fire emoji for over
-                                    else:
-                                        over_fire = ""  # Remove fire emoji for over if condition not met
-
-                                elif game.Constant < odds_game['total_number_goals']:
-                                    if odds_game['total_under_odds'] - game.Totals_Probability['Under']  <= 0.15:
-                                        under_fire = " 🔥"  # Add fire emoji for under
-                                    else:
-                                        under_fire = ""  # Remove fire emoji for under if condition not met
-
-                                elif game.Constant == odds_game['total_number_goals']:
-                                    over_fire, under_fire = "", ""  # Set fire emojis to empty if the totals are equal
-
-                            else:
-                                over_fire, under_fire = "", ""  # Set fire emojis to empty if any value is None
-
-                            # Determine if fire emoji should be added to projected odds
-                            home_fire = " 🔥" if odd_1 is not None and game.ML_Home_Decimal_Odds < (odd_1) - 0.15 else ""
-                            away_fire = " 🔥" if odd_2 is not None and game.ML_Away_Decimal_Odds < odd_2 - 0.15 else ""
-
+                           
                             st.subheader(f"{game.Visitor} *@* {game.Home}")
-                            st.write(f"{game.Home} | **Projected Odds:** {game.ML_Home_Decimal_Odds:.3f}{home_fire}")
-                            st.write(f"{game.Visitor} | **Projected Odds:** {game.ML_Away_Decimal_Odds:.3f}{away_fire}")
-                            st.write(f"Projected Over Under Line: {game.Constant:.1f}")
-                            st.write(f"Over: {game.Totals_Probability['Over']:.2f}{over_fire} /  Under: {game.Totals_Probability['Under']:.2f}{under_fire}")
-
-                            # Write the Fandual odds
-                            st.write("Fandual Odds:")
-                            st.write(f"{game.Home}: {odd_1}, {game.Visitor}: {odd_2}")
-                            # Include the total number of goals for the game
-                            st.write(f"Over Under Line: {odds_game['total_number_goals']}")
-                            st.write(f"Over: {odds_game['total_over_odds']}, Under: {odds_game['total_under_odds']}")
-
-                            if not odds_found:
-                                pass
+                            st.write(f"{game.Home} | **Projected Odds:** {game.ML_Home_Decimal_Odds:.3f}")
+                            st.write(f"{game.Visitor} | **Projected Odds:** {game.ML_Away_Decimal_Odds:.3f}")
+                            
+                            
                             with st.expander('More Details', expanded=False):
                                  
         
@@ -657,10 +537,9 @@ elif selection == '🏒 NHL Model':
                 st.subheader("Model's Top Players")
 
                 # Rename the columns for display and round 'mpg' to one decimal place
-                display_data = sorted_data2[['Rank','topplayer', 'playteam','pos', 'gp', 'g', 'p', 'mpg']].rename(columns={'Rank': 'Rank','topplayer': 'Player', 'playteam': 'Team','pos': 'Pos', 'gp': 'GP', 'g':'Goals','p':'Points', 'mpg': 'MPG'})
+                display_data = sorted_data2[['Rank','topplayer', 'playteam','pos', 'gp', 'g', 'p', 'mpg']].rename(columns={'Rank': 'Rank','topplayer': 'Player', 'playteam': 'Team','pos': 'Pos', 'gp': 'GP', 'g':'Goals','p':'Points'})
 
-                # Handle non-finite values before rounding and converting to integers
-                display_data['MPG'] = display_data['MPG'].apply(lambda x: f"{x:.1f}" if not pd.isnull(x) else "0.000")
+              
 
                 display_data['Points'] = display_data['Points'].fillna(0).astype(int)
                 display_data['Goals'] = display_data['Goals'].fillna(0).astype(int)
@@ -685,10 +564,10 @@ elif selection == '🏒 NHL Model':
                     
             
                 st.subheader("Model's Top Rookies")
-                display_data = sorted_data2[['Rank','bestrookies', 'rook team', 'pos1', 'gp1', 'g1','p1','mpg1']].rename(columns={'Rank': 'Rank','bestrookies': 'Rookie', 'rook team': 'Team', 'gp1': 'GP', 'pos1': 'Pos', 'mpg1': 'MPG','g1':'Goals','p1':'Points'})
+                display_data = sorted_data2[['Rank','bestrookies', 'rook team', 'pos1', 'gp1', 'g1','p1']].rename(columns={'Rank': 'Rank','bestrookies': 'Rookie', 'rook team': 'Team', 'gp1': 'GP', 'pos1': 'Pos', 'g1':'Goals','p1':'Points'})
 
                 # Handle non-finite values before rounding and converting to integers
-                display_data['MPG'] = display_data['MPG'].apply(lambda x: f"{x:.1f}" if not pd.isnull(x) else "0.000")
+                
                 display_data['Points'] = display_data['Points'].fillna(0).astype(int)
                 display_data['Goals'] = display_data['Goals'].fillna(0).astype(int)
                 display_data['GP'] = display_data['GP'].fillna(0).astype(int)
@@ -701,39 +580,11 @@ elif selection == '🏒 NHL Model':
 elif selection == '🏀 NBA Model':
     st.title('NBA Model 🏀')
     st.header("How the Model Works")
-    st.write("The model generates odds from its projected probability of outcomes. The 🔥 flags bets the model believes are positive EV bets.")
-    st.write("NBA starting lineups are finicky. The model updates for injuries but if the player is not listed on drop down they are being included.")                               
+    st.write("Think of these odds as the minimum return you would require to make a good bet.")
+    st.write("The real edge is created by comparing these models to your own insight to make quick data driven decisions.")                              
     # Use a relative path to the Excel file
     excel_file = 'nba.xlsm'
-    def get_nba_odds_from_database():
-            conn = sqlite3.connect('nbadata.db')
-            conn.row_factory = sqlite3.Row  # Set the row factory to return rows as dictionaries
-            c = conn.cursor()
 
-            # Execute a SELECT query to fetch data from the 'odds_data' table without sorting
-            c.execute("SELECT * FROM odds_data")
-            rows = c.fetchall()
-
-            conn.close()
-
-            if rows:
-                nhl_odds = []
-                for row in rows:
-                    game_odds = {
-                        'home_team': row['home_team'],
-                        'away_team': row['away_team'],
-                        'commence_time': row['commence_time'],
-                        'home_win_odds': row['home_win_odds'],
-                        'away_win_odds': row['away_win_odds'],
-                        'total_over_odds': row['total_over_odds'],  # Access over odds
-                        'total_under_odds': row['total_under_odds'],  # Access under odds
-                        'total_number_goals': row['total_number_goals']
-                    }
-                    nhl_odds.append(game_odds)
-
-                return nhl_odds
-            else:
-                return None
 
 
     # Load data from "Game Data" sheet
@@ -813,7 +664,7 @@ elif selection == '🏀 NBA Model':
 
 # Check if the button is clicked
             if button_clicked:
-                nba_odds = get_nba_odds_from_database()
+                
         
                 @st.cache_data
                 def skipComputation(today_games):
@@ -869,57 +720,16 @@ elif selection == '🏀 NBA Model':
 
                 st.write("### Today's Projected Odds:")
                 for i, game in enumerate(today_games.itertuples(), start=1):
-                    odds_found = False
-                    odd_1, odd_2 = None, None  # Initialize odd variables
-                    
-
-                    for odds_game in nba_odds:
-                                # Check if the odds correspond to the game's home and away teams
-                        home_team, away_team = odds_game['home_team'], odds_game['away_team']
-                        if home_team < away_team:
-                                    odd_1, odd_2 = odds_game['home_win_odds'], odds_game['away_win_odds']
-                        else:
-                                    odd_1, odd_2 = odds_game['away_win_odds'], odds_game['home_win_odds']
-
-                        if (home_team == game.Home and away_team == game.Visitor) or \
-                                        (home_team == game.Visitor and away_team == game.Home):
-                                    # If the odds match, assign them accordingly
-                                    odds_found = True
-                                    break
-
-                    over_fire, under_fire = "", ""  # Initialize fire emojis
-                    if game.Constant - odds_game['total_number_goals'] > 5:
-                                over_fire = "🔥"  # Add fire emoji for over
-                                under_fire = ""  # Remove fire emoji for under
-                    elif game.Constant - odds_game['total_number_goals'] < -5:
-                                over_fire = ""  # Remove fire emoji for over
-                                under_fire = "🔥"  # Add fire emoji for under
-                    else:
-                                under_fire, over_fire = "", ""  # Remove fire emoji for both if condition not met
 
 
-
-                   
-
-                            # Determine if fire emoji should be added to projected odds
-                    home_fire = " 🔥" if odd_1 is not None and game.ML_Home_Decimal_Odds < (odd_1) - 0.15 else ""
-                    away_fire = " 🔥" if odd_2 is not None and game.ML_Away_Decimal_Odds < odd_2 - 0.15 else ""
 
                     st.subheader(f"{game.Visitor} *@* {game.Home}")
-                    st.write(f"{game.Home} | **Projected Odds:** {game.ML_Home_Decimal_Odds:.3f}{home_fire}")
-                    st.write(f"{game.Visitor} | **Projected Odds:** {game.ML_Away_Decimal_Odds:.3f}{away_fire}")
+                    st.write(f"{game.Home} | **Projected Odds:** {game.ML_Home_Decimal_Odds:.3f}")
+                    st.write(f"{game.Visitor} | **Projected Odds:** {game.ML_Away_Decimal_Odds:.3f}")
                     st.write(f"Projected Over Under Line: {game.Constant:.1f}")
-                    st.write(f"Over: {game.Totals_Probability['Over']:.2f}{over_fire} /  Under: {game.Totals_Probability['Under']:.2f}{under_fire}")
+                    st.write(f"Over: {game.Totals_Probability['Over']:.2f} /  Under: {game.Totals_Probability['Under']:.2f}")
 
-                            # Write the Fandual odds
-                    st.write("Fandual Odds:")
-                    st.write(f"{game.Home}: {odd_1}, {game.Visitor}: {odd_2}")
-                            # Include the total number of goals for the game
-                    st.write(f"Over Under Line: {odds_game['total_number_goals']}")
-                    st.write(f"Over: {odds_game['total_over_odds']}, Under: {odds_game['total_under_odds']}")
-                    if not odds_found:
-                        pass
-           
+
             
             
                     # Display the expander button and its content
@@ -1074,7 +884,7 @@ elif selection == '🏀 NBA Model':
 
 # Check if the button is clicked
         if button_clicked:
-            nba_odds = get_nba_odds_from_database()
+            
             # Calculate and display the over/under odds, implied probabilities, and projected scores based on the selected method
             # Calculate the projected Money Line odds
             tomorrow_games['Projected_Line'] = 0.4 * tomorrow_games['ml1'] + 0.6 * tomorrow_games['ml2'] + 0 * tomorrow_games['ml3']
@@ -1124,53 +934,15 @@ elif selection == '🏀 NBA Model':
             # Display tomorrow's games and projected odds
             st.write("### Tomorrow's Projected Odds:")
             for i, game in enumerate(tomorrow_games.itertuples(), start=1):
-                    odds_found = False
-                    odd_1, odd_2 = None, None  # Initialize odd variables
-                    
 
-                    for odds_game in nba_odds:
-                                # Check if the odds correspond to the game's home and away teams
-                        home_team, away_team = odds_game['home_team'], odds_game['away_team']
-                        if home_team < away_team:
-                                    odd_1, odd_2 = odds_game['home_win_odds'], odds_game['away_win_odds']
-                        else:
-                                    odd_1, odd_2 = odds_game['away_win_odds'], odds_game['home_win_odds']
 
-                        if (home_team == game.Home and away_team == game.Visitor) or \
-                                        (home_team == game.Visitor and away_team == game.Home):
-                                    # If the odds match, assign them accordingly
-                                    odds_found = True
-                                    break
-
-                    over_fire, under_fire = "", ""  # Initialize fire emojis
-                    if game.Constant - odds_game['total_number_goals'] > 4:
-                                over_fire = "🔥"  # Add fire emoji for over
-                                under_fire = ""  # Remove fire emoji for under
-                    elif game.Constant - odds_game['total_number_goals'] < -4:
-                                over_fire = ""  # Remove fire emoji for over
-                                under_fire = "🔥"  # Add fire emoji for under
-                    else:
-                                under_fire, over_fire = "", ""  # Remove fire emoji for both if condition not met
-
-                            # Determine if fire emoji should be added to projected odds
-                    home_fire = " 🔥" if odd_1 is not None and game.ML_Home_Decimal_Odds < (odd_1) - 0.15 else ""
-                    away_fire = " 🔥" if odd_2 is not None and game.ML_Away_Decimal_Odds < odd_2 - 0.15 else ""
-
+                   
                     st.subheader(f"{game.Visitor} *@* {game.Home}")
-                    st.write(f"{game.Home} | **Projected Odds:** {game.ML_Home_Decimal_Odds:.3f}{home_fire}")
-                    st.write(f"{game.Visitor} | **Projected Odds:** {game.ML_Away_Decimal_Odds:.3f}{away_fire}")
+                    st.write(f"{game.Home} | **Projected Odds:** {game.ML_Home_Decimal_Odds:.3f}")
+                    st.write(f"{game.Visitor} | **Projected Odds:** {game.ML_Away_Decimal_Odds:.3f}")
                     st.write(f"Projected Over Under Line: {game.Constant:.1f}")
-                    st.write(f"Over: {game.Totals_Probability['Over']:.2f}{over_fire} /  Under: {game.Totals_Probability['Under']:.2f}{under_fire}")
+                    st.write(f"Over: {game.Totals_Probability['Over']:.2f} /  Under: {game.Totals_Probability['Under']:.2f}")
 
-                            # Write the Fandual odds
-                    st.write("Fandual Odds:")
-                    st.write(f"{game.Home}: {odd_1}, {game.Visitor}: {odd_2}")
-                            # Include the total number of goals for the game
-                    st.write(f"Over Under Line: {odds_game['total_number_goals']}")
-                    st.write(f"Over: {odds_game['total_over_odds']}, Under: {odds_game['total_under_odds']}")
-
-                    if not odds_found:
-                        pass
                 # Create an expander for more details of each game
                     with st.expander(f"More Details for Game {i}", expanded=False):
                         excel_file = 'nba.xlsm'
@@ -1391,179 +1163,25 @@ elif selection == '🏀 NBA Model':
 
 
 
-elif selection == '🏀 NBA Franchise Mode':
-    excel_file = 'nba.xlsm'
-    st.title('Welcome to Franchise Mode')
-    st.write('Filter NBA contracts and value players franchise worth.')
-
-    tab1, tab2 = st.tabs(["Team Totals", "Player Value"])
-
-    with tab1:
-        sheet_name1 = 'franstan'         
-        franchise_data1 = pd.read_excel(excel_file, sheet_name=sheet_name1)
-        sorted_data2 = franchise_data1.sort_values(by='salRank', ascending= False)
-        sorted_data2.rename(columns={'salRank': 'Franchise Score', 'Draftcap' : 'Draft Capital Rank'}, inplace=True)
-        sorted_data2['Franchise Score'] = sorted_data2['Franchise Score'].round(1)
-
-        # Select columns to display
-        columns_to_display = ['Team','Franchise Score', 'Draft Capital Rank']
-
-        # Convert DataFrame to HTML table without index
-        html_table = sorted_data2[columns_to_display].to_html(index=False)
-
-        # Add CSS styling to center the headers 
-        html_table = html_table.replace('<thead>', '<thead style="text-align: center;"><style> th { text-align: center; }</style>', 1)
-
-        # Display the HTML table in Streamlit
-        st.write(html_table, unsafe_allow_html=True)
-        
-    with tab2:
-        excel_file = 'nba.xlsm'
-        sheet_name = 'fran'
-        
-        
-        franchise_data = pd.read_excel(excel_file, sheet_name=sheet_name)
-       
-        teams = [
-            "Atlanta Hawks", "Boston Celtics", "Brooklyn Nets", "Charlotte Hornets",
-            "Chicago Bulls", "Cleveland Cavaliers", "Dallas Mavericks", "Denver Nuggets",
-            "Detroit Pistons", "Golden State Warriors", "Houston Rockets", "Indiana Pacers",
-            "Los Angeles Clippers", "Los Angeles Lakers", "Memphis Grizzlies", "Miami Heat",
-            "Milwaukee Bucks", "Minnesota Timberwolves", "New Orleans Pelicans", "New York Knicks",
-            "Oklahoma City Thunder", "Orlando Magic", "Philadelphia 76ers", "Phoenix Suns",
-            "Portland Trail Blazers", "Sacramento Kings", "San Antonio Spurs", "Toronto Raptors",
-            "Utah Jazz", "Washington Wizards"
-        ]
-
-        # Create a selection box for choosing the team
-        selected_team = st.selectbox('Select Team:', teams)
-        # Filter the data based on the selected team
-        filtered_data = franchise_data[franchise_data['team'] == selected_team]
-
-        # Sort the filtered data by the 'Value' column
-        filtered_data = filtered_data.sort_values(by='Value', ascending=False)
-        
-        # Format 'AAV' and 'Age' columns to display with two decimal points and no decimal points respectively
-        filtered_data['AAV'] = filtered_data['AAV'].round(2)
-        filtered_data['Age'] = filtered_data['Age'].round(0)
-
-        # Format 'Value' column to display with two decimal points
-        filtered_data['Value'] = filtered_data['Value'].apply(lambda x: f'{x:.2f}')
-
-        # Select columns to display
-        columns_to_display = ['Player', 'Age', 'AAV', 'Years', 'Value']
-
-        # Convert DataFrame to HTML table without index
-        html_table = filtered_data[columns_to_display].to_html(index=False)
-
-        # Add CSS styling to center the headers
-        html_table = html_table.replace('<thead>', '<thead style="text-align: center;"><style> th { text-align: center; }</style>', 1)
-
-        # Display the HTML table in Streamlit
-        st.write(html_table, unsafe_allow_html=True)
 
 
 
 elif selection == '🔑 Betting Strategy':
-    tab1, tab2, tab3= st.tabs(["Overview", "Expected Value", "Varience"])
-    with tab1:
-            st.title('Strategy 🔑')
-            st.write('To make money gambling, you need relentless discipline and a strategy with an edge. The sports betting market is generally efficient and set up for you to lose (like all gambling). Lines are priced to the sportsbook’s implied probabilities, making every bet have an expected return of zero. After rake, every bet has negative expected return, explaining why most people lose. However, bettors have one strategic advantage over sportsbooks: flexibility. Sportsbooks need to post lines every day for every game in every sport and will eventually post a non-competitive line. Profitable bettors shop the market for these mistakes. Below is a step-by-step guide for how Quantum Odds will help you generate an edge.')            
-            st.subheader('Data Models')
-            st.write('The first step to our strategy is to generate odds before they are released. Using statistics and machine learning, we crunch real time player and team data to produce our lines. Our data models produce lines the same way sportsbooks do. Having lines ready before the sportsbook is crucial to allowing you to find inefficiencies quickly.')
-            st.subheader('Speed and Sportsbook Selection')   
-            st.write('Making positive EV bets is 75% data and 25% speed. The best time to find a great bet is right after a sportsbook drops their lines. After release, lines will shift rapidly as sharks place large bets on inefficiencies. Sportsbooks know these bets are sharp and will adjust their lines appropriately making them stronger. Compare Sportsbooks and find which ones consistently release odds first. Track when lines are released and place your bets within an hour of them being released. When the odds are dropped compare them to Quantum Odd’s models and find the inefficiencies.')
-            st.subheader('Line Shopping')
-            st.write('The last step of maximizing your EV is to line shop your bets. Place all your bets on the book that releases lines first, then watch other books release their odds. Generally, the closer to gametime the sharper the odds but sometimes you can cash out on your original bet to get better odds at another book. Do note, it rarely works to line shop if you pay a cash out penalty and this should be considered when picking your main book.')
-            st.write('Line shopping also allows you to back-test your bets. If lines consistently move in your favor, you must be making high value bets. ') 
-            st.subheader('Discipline') 
-            st.write('1. Unit size 2-4% of bank roll per bet')
-            st.write('2. Don’t bet for the sake of betting - no inefficiencies no bet')
-            st.write('3. Understand variance and how it impacts your returns')
-    with tab2:
-        st.title('Expected Value')
-        st.write('Expected value is the long-run average outcome of a probability event. To calculate expected value, you sum the probability of outcomes multiplied by the payoff of those specific outcomes. This sounds complex but the formula is quite simple:')
-        st.write(' EV = (probability of event) * (payoff of event)')                            
-        st.write(' For an example, imagine a game in which the outcome is 50/50, a complete coin flip. Most sportsbooks would give you a line of 1.9 (-110) for both sides. The EV equation can be shown below assuming a 10-dollar bet:')                            
-        st.write('EV = (0.5) * (10 * 1.9) = 9.5')      
-        st.write('Therefore betting $10 on a coin flip will lose you 50 cents on average at a sportsbook. Now imagine an example of an outcome that is expected to happen 75% of the time. Sportsbooks would give you a line  of 1.26 (-385) for the favorite and 3.8 (+280) for the dog. See below:') 
-        st.write(' EV = (0.75) * (10 * 1.26) = 9.5 and the other side EV = (0.25) * (10 * 3.8) = 9.5')  
-        st.write('The sportsbook goal is to create lines were both outcomes are slightly unprofitable. At Quantum Odds, we use this math to find inefficient lines. For example, imagine the Warriors are playing the Lakers. Using our regression models, we calculate that the Warriors will win 62% of the time meaning the Lakers will win 38%. Our model will automatically calculate the minimum odds required to make your money back:')
-        st.write(' Warriors = (0.62) * (10 * Breakeven Line) = (10), Lakers = (0.38) * (10 * Breakeven Line) = (10). Solving the equations, the breakeven line is: Warriors - 1.61 and Lakers – 2.63')
-        st.write('Now you need to compare these lines to your sportsbook. If the given lines are: Warriors  (1.54) and Lakers  (2.95). So you would bet on the Lakers as it would be positive EV. Shown here: EV = (0.38) * (10 * 2.95) = 11.21.')  
-        st.write('For every 10 dollars wagered you would gain $1.21 on average, a positive EV and a good bet.')
-
-    with tab3:
-        st.title('Varience')
-        st.write("Variance is the concept that luck plays a significant role in games of chance over the short term. Even when you have an edge, you won't always win in any single event or day. Understanding variance is important in all forms of gambling for the following reasons: Bankroll Management: You need to have an adequate bankroll to weather the inevitable upswings and downswings of sports gambling. Mental Game: Accepting variance helps reduce frustration. A bad day doesn't mean you're a bad bettor or that you made bad bets. Focusing on the Long-Term: Variance emphasizes the importance of judging your success over a large sample size of bets, not on individual results. Professional gamblers focus on putting themselves in as many positive EV situations as possible and then let the math play itself out. Variance is like 'noise' in the short term, but over the long run, skill, and smart decision-making will prevail.")
-
-
-elif selection == '💲Performance Tracking':
-    # Define functions
-    def get_current_value(file_path, column_name):
-        df = pd.read_excel(file_path)
-        last_value = df[column_name].iloc[-1]
-        return last_value
-
-    def calculate_win_loss_push(column):
-        wins = int(column.str.count('y').sum())
-        losses = int(column.str.count('n').sum())
-        pushes = int(column.str.count('p').sum())
-        return f'{wins} Wins - {losses} Losses - {pushes} Push'
-
-    def calculate_percentage_return(starting_bank_role, current_bank_role):
-        return (current_bank_role / starting_bank_role - 1) * 100
-
     
-    st.title('Performance Tracking')
-
-    
-    file_path = 'Performance.xlsx'  
-
-    # Column names
-    column_name_balance = 'Balance'  # Replace with the actual name of your balance column
-    column_name_outcomes = 'Win'  # Replace with the actual name of your outcomes column
-
-    # Selection logic
-    if selection == '💲Performance Tracking':
-        # Get the current bank role
-        current_bank_role = get_current_value(file_path, column_name_balance)
-
-        # Read Excel file for outcomes
-        df_outcomes = pd.read_excel(file_path)
-
-        # Extract the specified column for outcomes
-        outcomes_column = df_outcomes[column_name_outcomes]
-
-        # Call the function with the correct column
-        result = calculate_win_loss_push(outcomes_column)
-
-        # Calculate percentage return
-        starting_bank_role = 250  # Assuming 'starting_bank_role' is 250 (as mentioned in your code)
-        percentage_return = calculate_percentage_return(starting_bank_role, current_bank_role)
-
-        # Set color based on the sign of percentage return
-        color = 'green' if percentage_return >= 0 else 'red'
-
-        # Display current record and percentage return
-        st.subheader(result)
-        st.write(f'Starting Bank Roll = {starting_bank_role} | Current Bank Roll = {current_bank_role:.2f}')
-
-    
-        # Format the percentage return for display
-        formatted_percentage_return = f'<span style="font-size:24px; color:{color}; font-weight:bold;">{percentage_return:.2f}%</span>'
-        # Use st.markdown for displaying HTML content
-        st.markdown(f'Percentage Return: {formatted_percentage_return}', unsafe_allow_html=True)
-
-        # Create line chart
-        fig = px.line(df_outcomes, x='Date', y=['Starting Balance', 'Current Balance'], labels={'value': 'Balance'})
-
-        # Convert 'Date' column to string
-        df_outcomes['Date'] = df_outcomes['Date'].astype(str)
-
-        # Display the chart using st.plotly_chart
-        st.plotly_chart(fig, use_container_width=True)
-
+        st.title('Strategy 🔑')
+        st.write('To make money gambling, you need relentless discipline and a strategy with an edge. The sports betting market is generally efficient and set up for you to lose (like all gambling). Lines are priced to the sportsbook’s implied probabilities, making every bet have an expected return of zero. After rake, every bet has negative expected return, explaining why most people lose. However, bettors have one strategic advantage over sportsbooks: flexibility. Sportsbooks need to post lines every day for every game in every sport and will eventually post a non-competitive line. Profitable bettors shop the market for these mistakes. Below is a step-by-step guide for how Quantum Odds will help you generate an edge.')            
+        st.subheader('Data Models')
+        st.write('The first step to our strategy is to generate odds before they are released. Using statistics and machine learning, we crunch real-time player and team data to produce our lines. Our data models produce lines the same way sportsbooks do. Having lines ready before the sportsbook is crucial to allowing you to find inefficiencies quickly.')
+        st.subheader('Speed and Sportsbook Selection')   
+        st.write('Making positive EV bets is 75% data and 25% speed. The best time to find a great bet is right after a sportsbook drops their lines. After release, lines will shift rapidly as sharks place large bets on inefficiencies. Sportsbooks know these bets are sharp and will adjust their lines appropriately making them stronger. Compare Sportsbooks and find which ones consistently release odds first. Track when lines are released and place your bets within an hour of them being released. When the odds are dropped, compare them to Quantum Odd’s models and find the inefficiencies.')
+        st.subheader('Line Shopping')
+        st.write('The last step of maximizing your EV is to line shop your bets. Place all your bets on the book that releases lines first, then watch other books release their odds. Generally, the closer to gametime the sharper the odds but sometimes you can cash out on your original bet to get better odds at another book. Do note, it rarely works to line shop if you pay a cash-out penalty, and this should be considered when picking your main book.')
+        st.write('Line shopping also allows you to back-test your bets. If lines consistently move in your favor, you must be making high-value bets.') 
+        st.subheader('Discipline') 
+        st.write('1. Unit size 2-4% of bankroll per bet')
+        st.write('2. Don’t bet for the sake of betting - no inefficiencies, no bet')
+        st.write('3. Understand variance and how it impacts your returns')
 
    
 
+    
