@@ -1142,7 +1142,7 @@ elif selection == '🏀 NBA Model':
 
     
         pages  = [
-        "Power Rankings","MVP Race", "Rookie of the Year","Most Improved Player"
+        "Power Rankings","MVP Race"
         ]
         
         # Create a selection box for choosing the team
@@ -1153,11 +1153,7 @@ elif selection == '🏀 NBA Model':
             display_team_rankings(sorted_data) 
         elif selected_team == "MVP Race":
             display_top_players(sorted_data2)  # Assuming MVP data is in sorted_data2
-        elif selected_team == "Rookie of the Year":
-            display_top_rookies(sorted_data2)  # Assuming Rookie data is in sorted_data2
-        elif selected_team == "Most Improved Player":
-            # Add a placeholder or a message stating this feature is not yet implemented
-            st.write("Most Improved Player rankings coming soon!") 
+
 
 
 
