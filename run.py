@@ -14,6 +14,7 @@ from io import BytesIO
 from nba_api.stats.endpoints import leaguestandingsv3
 import sqlite3
 
+
 st.set_page_config(page_title="Quantum Odds", page_icon="🔒", layout="wide")
 
 hide_st_style = """
@@ -57,6 +58,7 @@ def adjust_date_by_offset(date_column, time_zone_offset):
 time_zone = pytz.timezone('America/Los_Angeles')
 
 nhl_odds = None
+
 
 # Sidebar with a smaller width
 selection = st.sidebar.radio('Quantum Odds 	✅', ['🏠 Home','🏀 NBA Model', '🏒 NHL Model', '🔑 Betting Strategy'])
